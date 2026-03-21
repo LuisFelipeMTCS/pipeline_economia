@@ -10,15 +10,17 @@ services:
     ports:
       - "7077:7077"
       - "8080:8080"
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master --host spark-master
   
   spark-worker:
     image: apache/spark:3.5.0
     container_name: spark-worker
     environment:
       - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_MASTER_URL=spark://spark-master:7077
     depends_on:
       - spark
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
@@ -64,7 +66,7 @@ services:
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://hive:hive@postgres/metastore_db
-      - AIRFLOW__CORE__LOAD_EXAMPLES=True
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
     ports:
       - "8081:8080"
     depends_on:

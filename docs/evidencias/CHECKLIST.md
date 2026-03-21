@@ -3,7 +3,7 @@
 ## Dia 1: Infraestrutura
 - [X] Organizar estrutura do projeto 
 - [X] Subir Docker Compose com Spark, Kafka, Hive, Airflow
-- [ ] Testar comunicação entre os serviços
+- [X] Testar comunicação entre os serviços
 - [ ] Garantir persistência com volumes
 - [ ] Commitar com mensagens padronizadas
 

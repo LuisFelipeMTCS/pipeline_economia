@@ -4,6 +4,9 @@ services:
     container_name: spark-master
     environment:
       - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_IP=spark
     ports:
       - "7077:7077"
       - "8080:8080"
@@ -13,7 +16,7 @@ services:
     container_name: spark-worker
     environment:
       - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_MASTER_URL=spark://spark:7077
     depends_on:
       - spark
 
@@ -57,8 +60,11 @@ services:
   airflow:
     image: apache/airflow:2.8.1
     restart: always
+    command: standalone
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://hive:hive@postgres/metastore_db
+      - AIRFLOW__CORE__LOAD_EXAMPLES=True
     ports:
       - "8081:8080"
     depends_on:

@@ -1,6 +1,7 @@
 # Checklist do Projeto
 
 ## Dia 1: Infraestrutura
+- [X] Organizar estrutura do projeto 
 - [ ] Subir Docker Compose com Spark, Kafka, Hive, Airflow
 - [ ] Testar comunicação entre os serviços
 - [ ] Garantir persistência com volumes

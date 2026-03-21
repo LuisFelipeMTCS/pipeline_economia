@@ -4,8 +4,8 @@
 - [X] Organizar estrutura do projeto 
 - [X] Subir Docker Compose com Spark, Kafka, Hive, Airflow
 - [X] Testar comunicação entre os serviços
-- [ ] Garantir persistência com volumes
-- [ ] Commitar com mensagens padronizadas
+- [X] Garantir persistência com volumes
+- [X] Commitar com mensagens padronizadas
 
 ## Dia 2: Ingestão e Orquestração
 - [ ] Implementar script PySpark para ler XMLs e converter em JSON

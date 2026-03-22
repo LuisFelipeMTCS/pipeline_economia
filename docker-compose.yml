@@ -100,27 +100,42 @@ services:
 
   postgres:
     image: postgres:15-alpine
+    container_name: postgres
     environment:
       - POSTGRES_USER=hive
       - POSTGRES_PASSWORD=hive
       - POSTGRES_DB=metastore_db
+      - POSTGRES_HOST_AUTH_METHOD=md5
+    command: -c password_encryption=md5
     volumes:
       - postgres-data:/var/lib/postgresql/data
+
+  hive-metastore:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive-metastore
+    command: /opt/hive/bin/hive --service metastore
+    environment:
+      - SERVICE_PRECONDITION=namenode:50070 datanode:50075 postgres:5432
+    env_file:
+      - ./config/hadoop.env
+    ports:
+      - "9083:9083"
+    depends_on:
+      - namenode
+      - datanode
+      - postgres
 
   hive:
     image: bde2020/hive:2.3.2-postgresql-metastore
     container_name: hive
     environment:
-      - HIVE_METASTORE_DB_TYPE=postgres
-      - SERVICE_PRECONDITION=namenode:50070 datanode:50075 postgres:5432
+      - SERVICE_PRECONDITION=hive-metastore:9083
     env_file:
       - ./config/hadoop.env
     ports:
       - "10000:10000"
     depends_on:
-      - namenode
-      - datanode
-      - postgres
+      - hive-metastore
 
   kafdrop:
     image: obsidiandynamics/kafdrop:latest
@@ -132,6 +147,17 @@ services:
     depends_on:
       - kafka
       - kafka-2
+
+  hue:
+    image: gethue/hue:latest
+    container_name: hue
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./config/hue/hue.ini:/usr/share/hue/desktop/conf/z-hue.ini
+    depends_on:
+      - namenode
+      - datanode
 
   airflow:
     build:

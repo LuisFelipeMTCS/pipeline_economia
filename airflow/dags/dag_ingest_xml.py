@@ -5,12 +5,13 @@ Orquestra a execução do script PySpark que lê os arquivos XML
 e publica as notas fiscais no tópico Kafka 'nfe-raw'.
 
 Fluxo:
-    xml_to_kafka → validar_kafka
+    xml_to_kafka → validar_kafka → acionar_medallion
 """
 
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from datetime import datetime, timedelta
 
 
@@ -78,4 +79,10 @@ with DAG(
         python_callable=validar_mensagens_kafka,
     )
 
-    xml_to_kafka >> validar_kafka
+    acionar_medallion = TriggerDagRunOperator(
+        task_id="acionar_medallion",
+        trigger_dag_id="process_medallion",
+        wait_for_completion=False,
+    )
+
+    xml_to_kafka >> validar_kafka >> acionar_medallion

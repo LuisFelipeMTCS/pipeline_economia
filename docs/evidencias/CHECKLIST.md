@@ -8,10 +8,12 @@
 - [X] Commitar com mensagens padronizadas
 
 ## Dia 2: Ingestão e Orquestração
-- [ ] Implementar script PySpark para ler XMLs e converter em JSON
-- [ ] Criar DAG 1 no Airflow para orquestrar o processo
-- [ ] Testar envio dos dados ao Kafka
-- [ ] Commitar com mensagens padronizadas
+- [X] Implementar script PySpark para ler XMLs e converter em JSON
+- [X] Padroninzando Enginnes 
+- [X] Implementar teste Unitario
+- [X] Criar DAG 1 no Airflow para orquestrar o processo
+- [X] Testar envio dos dados ao Kafka
+- [X] Commitar com mensagens padronizadas
 
 ## Dia 3: Consumo e Persistência
 - [ ] Implementar script PySpark para consumir do Kafka e salvar no Hive

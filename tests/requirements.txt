@@ -1,0 +1,3 @@
+# Testes
+pytest
+kafka-python

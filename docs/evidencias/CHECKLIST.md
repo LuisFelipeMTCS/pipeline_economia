@@ -16,6 +16,7 @@
 - [X] Commitar com mensagens padronizadas
 
 ## Dia 3: Consumo e Persistência
+- [X] Adicionar mais um broker no kafka para haver paralelismo
 - [ ] Implementar script PySpark para consumir do Kafka e salvar no Hive
 - [ ] Criar DAG 2 no Airflow com dependência da DAG 1
 - [ ] Validar persistência dos dados no Hive

@@ -24,7 +24,7 @@ def validar_mensagens_kafka():
 
     consumer = KafkaConsumer(
         "nfe-raw",
-        bootstrap_servers="kafka:29092",
+        bootstrap_servers="kafka:29092,kafka-2:29093",
         auto_offset_reset="earliest",
         consumer_timeout_ms=10000,
         value_deserializer=lambda v: json.loads(v.decode("utf-8")),

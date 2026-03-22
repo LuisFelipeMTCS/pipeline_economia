@@ -74,6 +74,30 @@ services:
     depends_on:
       - zookeeper
 
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
+    container_name: namenode
+    ports:
+      - "50070:50070"
+    environment:
+      - CLUSTER_NAME=pipeline-economia
+    env_file:
+      - ./config/hadoop.env
+    volumes:
+      - namenode-data:/hadoop/dfs/name
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
+    container_name: datanode
+    environment:
+      - SERVICE_PRECONDITION=namenode:50070
+    env_file:
+      - ./config/hadoop.env
+    volumes:
+      - datanode-data:/hadoop/dfs/data
+    depends_on:
+      - namenode
+
   postgres:
     image: postgres:15-alpine
     environment:
@@ -85,12 +109,17 @@ services:
 
   hive:
     image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive
     environment:
       - HIVE_METASTORE_DB_TYPE=postgres
+      - SERVICE_PRECONDITION=namenode:50070 datanode:50075 postgres:5432
+    env_file:
+      - ./config/hadoop.env
     ports:
       - "10000:10000"
     depends_on:
-      - spark
+      - namenode
+      - datanode
       - postgres
 
   kafdrop:
@@ -107,7 +136,7 @@ services:
   airflow:
     build:
       context: .
-      dockerfile: airflow/Dockerfile
+      dockerfile: config/docker/Dockerfile.airflow
     restart: always
     command: standalone
     environment:
@@ -129,3 +158,5 @@ services:
 
 volumes:
   postgres-data:
+  namenode-data:
+  datanode-data:

@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from typing import Optional
 
 NS = "http://www.portalfiscal.inf.br/nfe"
 
@@ -8,7 +9,7 @@ def _tag(name: str) -> str:
     return f"{{{NS}}}{name}"
 
 
-def _text(parent, tag: str) -> str | None:
+def _text(parent, tag: str) -> Optional[str]:
     el = parent.find(_tag(tag))
     return el.text if el is not None else None
 

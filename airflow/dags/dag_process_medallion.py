@@ -4,8 +4,8 @@ DAG 2 — Processamento Medalhão: Kafka → Bronze → Silver → Gold
 Orquestra o pipeline de processamento dos dados de NF-e,
 implementando a arquitetura medalhão sobre o HDFS.
 
-Fluxo atual:
-    kafka_to_bronze
+Fluxo:
+    kafka_to_bronze >> bronze_to_silver >> validate_silver
 """
 
 from airflow import DAG
@@ -45,4 +45,14 @@ with DAG(
         bash_command=SPARK_SUBMIT + "/opt/airflow/scripts/kafka_to_bronze.py",
     )
 
-    kafka_to_bronze
+    bronze_to_silver = BashOperator(
+        task_id="bronze_to_silver",
+        bash_command=SPARK_SUBMIT + "/opt/airflow/scripts/bronze_to_silver.py",
+    )
+
+    validate_silver = BashOperator(
+        task_id="validate_silver",
+        bash_command=SPARK_SUBMIT + "/opt/airflow/scripts/validate_silver.py",
+    )
+
+    kafka_to_bronze >> bronze_to_silver >> validate_silver

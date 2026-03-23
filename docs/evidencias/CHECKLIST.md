@@ -16,12 +16,15 @@
 - [X] Commitar com mensagens padronizadas
 
 ## Dia 3: Consumo e Persistência
-- [ ] Implementar script PySpark para consumir do Kafka e salvar no Hive
-- [ ] Criar DAG 2 no Airflow com dependência da DAG 1
-- [ ] Validar persistência dos dados no Hive
-- [ ] Commitar com mensagens padronizadas
+- [X] Adicionar mais um broker no kafka para haver paralelismo
+- [X] Adicionando HDFS para armazenamento 
+- [X] Implementar script PySpark para consumir do Kafka e salvar no Hive
+- [X] Criar DAG 2 no Airflow com dependência da DAG 1
+- [X] Validar persistência dos dados no Hive
+- [X] Commitar com mensagens padronizadas
 
 ## Dia 4: Análises e Evidências
+- [ ] Implementar camada silver e gold 
 - [ ] Escrever consultas analíticas no Hive (contagens, somas, agrupamentos)
 - [ ] Salvar resultados das consultas no Hive
 - [ ] Capturar evidências (prints, logs, outputs)

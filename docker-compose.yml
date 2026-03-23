@@ -54,28 +54,88 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
     depends_on:
       - zookeeper
 
+  kafka-2:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka-2
+    ports:
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9093,PLAINTEXT_INTERNAL://0.0.0.0:29093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9093,PLAINTEXT_INTERNAL://kafka-2:29093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+    depends_on:
+      - zookeeper
+
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
+    container_name: namenode
+    ports:
+      - "50070:50070"
+    environment:
+      - CLUSTER_NAME=pipeline-economia
+    env_file:
+      - ./config/hadoop.env
+    volumes:
+      - namenode-data:/hadoop/dfs/name
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
+    container_name: datanode
+    environment:
+      - SERVICE_PRECONDITION=namenode:50070
+    env_file:
+      - ./config/hadoop.env
+    volumes:
+      - datanode-data:/hadoop/dfs/data
+    depends_on:
+      - namenode
+
   postgres:
     image: postgres:15-alpine
+    container_name: postgres
     environment:
       - POSTGRES_USER=hive
       - POSTGRES_PASSWORD=hive
       - POSTGRES_DB=metastore_db
+      - POSTGRES_HOST_AUTH_METHOD=md5
+    command: -c password_encryption=md5
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
+  hive-metastore:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive-metastore
+    command: /opt/hive/bin/hive --service metastore
+    environment:
+      - SERVICE_PRECONDITION=namenode:50070 datanode:50075 postgres:5432
+    env_file:
+      - ./config/hadoop.env
+    ports:
+      - "9083:9083"
+    depends_on:
+      - namenode
+      - datanode
+      - postgres
+
   hive:
     image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive
     environment:
-      - HIVE_METASTORE_DB_TYPE=postgres
+      - SERVICE_PRECONDITION=hive-metastore:9083
+    env_file:
+      - ./config/hadoop.env
     ports:
       - "10000:10000"
     depends_on:
-      - spark
-      - postgres
+      - hive-metastore
 
   kafdrop:
     image: obsidiandynamics/kafdrop:latest
@@ -83,14 +143,26 @@ services:
     ports:
       - "9000:9000"
     environment:
-      KAFKA_BROKERCONNECT: kafka:29092
+      KAFKA_BROKERCONNECT: kafka:29092,kafka-2:29093
     depends_on:
       - kafka
+      - kafka-2
+
+  hue:
+    image: gethue/hue:latest
+    container_name: hue
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./config/hue/hue.ini:/usr/share/hue/desktop/conf/z-hue.ini
+    depends_on:
+      - namenode
+      - datanode
 
   airflow:
     build:
       context: .
-      dockerfile: airflow/Dockerfile
+      dockerfile: config/docker/Dockerfile.airflow
     restart: always
     command: standalone
     environment:
@@ -112,3 +184,5 @@ services:
 
 volumes:
   postgres-data:
+  namenode-data:
+  datanode-data:

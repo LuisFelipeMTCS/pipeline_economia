@@ -87,3 +87,43 @@ def test_flush_chamado_antes_do_close():
     flush_and_close(producer)
 
     assert chamadas == ["flush", "close"]
+
+
+def test_publish_multiplas_nfes_envia_todas():
+    """publish_nfe deve ser chamado uma vez para cada NF-e da lista."""
+    producer = MagicMock()
+    nfes = [
+        {"id_nfe": "NFe001", "numero_nfe": "001"},
+        {"id_nfe": "NFe002", "numero_nfe": "002"},
+        {"id_nfe": "NFe003", "numero_nfe": "003"},
+    ]
+
+    for nfe in nfes:
+        publish_nfe(producer, "nfe-raw", nfe)
+
+    assert producer.send.call_count == 3
+
+
+def test_publish_multiplas_nfes_chaves_corretas():
+    """Cada mensagem deve usar o id_nfe correspondente como chave."""
+    producer = MagicMock()
+    nfes = [
+        {"id_nfe": "NFe001", "numero_nfe": "001"},
+        {"id_nfe": "NFe002", "numero_nfe": "002"},
+    ]
+
+    for nfe in nfes:
+        publish_nfe(producer, "nfe-raw", nfe)
+
+    chaves = [call.kwargs["key"] for call in producer.send.call_args_list]
+    assert chaves == [b"NFe001", b"NFe002"]
+
+
+@patch("engines.ingestion.kafka_producer.KafkaProducer")
+def test_create_producer_aceita_multiplos_brokers(mock_kafka):
+    """create_producer deve aceitar lista de brokers separados por vírgula."""
+    brokers = "kafka:29092,kafka-2:29093"
+    create_producer(brokers)
+
+    args = mock_kafka.call_args
+    assert args.kwargs["bootstrap_servers"] == brokers

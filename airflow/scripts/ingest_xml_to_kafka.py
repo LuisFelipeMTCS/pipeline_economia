@@ -23,7 +23,7 @@ from engines.ingestion.kafka_producer import create_producer, publish_nfe, flush
 
 XMLS_DIR = "/opt/airflow/xmls"
 KAFKA_TOPIC = "nfe-raw"
-KAFKA_BROKER = "kafka:29092"
+KAFKA_BROKER = "kafka:29092,kafka-2:29093"
 
 
 def main():

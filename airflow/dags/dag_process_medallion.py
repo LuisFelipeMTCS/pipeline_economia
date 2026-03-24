@@ -5,7 +5,7 @@ Orquestra o pipeline de processamento dos dados de NF-e,
 implementando a arquitetura medalhão sobre o HDFS.
 
 Fluxo:
-    kafka_to_bronze >> bronze_to_silver >> validate_silver
+    kafka_to_bronze >> bronze_to_silver >> validate_silver >> silver_to_gold
 """
 
 from airflow import DAG
@@ -55,4 +55,9 @@ with DAG(
         bash_command=SPARK_SUBMIT + "/opt/airflow/scripts/validate_silver.py",
     )
 
-    kafka_to_bronze >> bronze_to_silver >> validate_silver
+    silver_to_gold = BashOperator(
+        task_id="silver_to_gold",
+        bash_command=SPARK_SUBMIT + "/opt/airflow/scripts/silver_to_gold.py",
+    )
+
+    kafka_to_bronze >> bronze_to_silver >> validate_silver >> silver_to_gold

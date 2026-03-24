@@ -177,6 +177,7 @@ services:
       - ./airflow/scripts:/opt/airflow/scripts
       - ./engines:/opt/airflow/engines
       - ./xmls:/opt/airflow/xmls
+      - ./tests:/opt/airflow/tests
     depends_on:
       - spark
       - kafka

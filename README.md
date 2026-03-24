@@ -1,4 +1,4 @@
-# Pipeline de Dados NF-e — Arquitetura Medalhão com Star Schema
+# Pipeline de Dados NF-e Streaming — Arquitetura Medalhão com Star Schema
 
 > Projeto desenvolvido como teste técnico para a vaga de **Engenheiro de Dados Sênior** na **Indra Group / Minsait**, e mantido como portfólio de referência em Engenharia de Dados com tecnologias do ecossistema Hadoop/Spark.
 

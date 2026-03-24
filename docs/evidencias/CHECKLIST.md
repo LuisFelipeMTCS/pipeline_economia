@@ -24,9 +24,9 @@
 - [X] Commitar com mensagens padronizadas
 
 ## Dia 4: Análises e Evidências
-- [ ] Implementar camada silver e gold 
-- [ ] Escrever consultas analíticas no Hive (contagens, somas, agrupamentos)
-- [ ] Salvar resultados das consultas no Hive
+- [X] Implementar camada silver e gold 
+- [X] Escrever consultas analíticas no Hive (contagens, somas, agrupamentos)
+- [X] Salvar resultados das consultas no Hive
 - [ ] Capturar evidências (prints, logs, outputs)
 - [ ] Commitar com mensagens padronizadas
 

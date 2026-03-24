@@ -32,10 +32,10 @@
 
 ## Dia 5: Revisão e Documentação
 - [X] Revisar todo o projeto
-- [ ] Ajustar detalhes finais
-- [ ] Preparar documentação no repositório
-- [ ] Garantir que o fork no GitHub está completo e organizado
-- [ ] Commitar com mensagens padronizadas
+- [X] Ajustar detalhes finais
+- [X] Preparar documentação no repositório
+- [X] Garantir que o fork no GitHub está completo e organizado
+- [X] Commitar com mensagens padronizadas
 
 ## Dia 6: Finalização
 - [ ] Última revisão

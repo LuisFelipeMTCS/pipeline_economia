@@ -27,11 +27,11 @@
 - [X] Implementar camada silver e gold 
 - [X] Escrever consultas analíticas no Hive (contagens, somas, agrupamentos)
 - [X] Salvar resultados das consultas no Hive
-- [ ] Capturar evidências (prints, logs, outputs)
-- [ ] Commitar com mensagens padronizadas
+- [X] Capturar evidências (prints, logs, outputs)
+- [X] Commitar com mensagens padronizadas
 
 ## Dia 5: Revisão e Documentação
-- [ ] Revisar todo o projeto
+- [X] Revisar todo o projeto
 - [ ] Ajustar detalhes finais
 - [ ] Preparar documentação no repositório
 - [ ] Garantir que o fork no GitHub está completo e organizado

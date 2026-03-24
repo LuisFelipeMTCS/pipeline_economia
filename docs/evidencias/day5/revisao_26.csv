@@ -1,0 +1,26 @@
+dim_localidade.id_localidade,dim_localidade.uf,dim_localidade.regiao,dim_localidade.estado_completo
+1,AC,Norte,Acre
+2,AL,Nordeste,Alagoas
+3,AM,Norte,Amazonas
+4,AP,Norte,Amapá
+5,BA,Nordeste,Bahia
+6,CE,Nordeste,Ceará
+7,DF,Centro-Oeste,Distrito Federal
+8,ES,Sudeste,Espírito Santo
+9,GO,Centro-Oeste,Goiás
+10,MA,Nordeste,Maranhão
+11,MG,Sudeste,Minas Gerais
+12,MS,Centro-Oeste,Mato Grosso do Sul
+13,MT,Centro-Oeste,Mato Grosso
+14,PA,Norte,Pará
+15,PB,Nordeste,Paraíba
+16,PE,Nordeste,Pernambuco
+17,PR,Sul,Paraná
+18,RJ,Sudeste,Rio de Janeiro
+19,RN,Nordeste,Rio Grande do Norte
+20,RO,Norte,Rondônia
+21,RR,Norte,Roraima
+22,SC,Sul,Santa Catarina
+23,SE,Nordeste,Sergipe
+24,SP,Sudeste,São Paulo
+25,TO,Norte,Tocantins

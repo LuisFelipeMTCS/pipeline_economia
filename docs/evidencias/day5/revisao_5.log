@@ -1,0 +1,167 @@
+5e5232d564b8
+*** Found local files:
+***   * /opt/airflow/logs/dag_id=ingest_xml_streaming/run_id=scheduled__2026-03-24T01:59:00+00:00/task_id=xml_to_kafka/attempt=1.log
+[2026-03-24T02:00:00.775+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: ingest_xml_streaming.xml_to_kafka scheduled__2026-03-24T01:59:00+00:00 [queued]>
+[2026-03-24T02:00:00.785+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: ingest_xml_streaming.xml_to_kafka scheduled__2026-03-24T01:59:00+00:00 [queued]>
+[2026-03-24T02:00:00.786+0000] {taskinstance.py:2170} INFO - Starting attempt 1 of 2
+[2026-03-24T02:00:00.803+0000] {taskinstance.py:2191} INFO - Executing <Task(BashOperator): xml_to_kafka> on 2026-03-24 01:59:00+00:00
+[2026-03-24T02:00:00.810+0000] {standard_task_runner.py:60} INFO - Started process 2620 to run task
+[2026-03-24T02:00:00.815+0000] {standard_task_runner.py:87} INFO - Running: ['airflow', 'tasks', 'run', 'ingest_xml_streaming', 'xml_to_kafka', 'scheduled__2026-03-24T01:59:00+00:00', '--job-id', '282', '--raw', '--subdir', 'DAGS_FOLDER/dag_ingest_xml.py', '--cfg-path', '/tmp/tmp50xyel7r']
+[2026-03-24T02:00:00.817+0000] {standard_task_runner.py:88} INFO - Job 282: Subtask xml_to_kafka
+[2026-03-24T02:00:00.896+0000] {task_command.py:423} INFO - Running <TaskInstance: ingest_xml_streaming.xml_to_kafka scheduled__2026-03-24T01:59:00+00:00 [running]> on host 5e5232d564b8
+[2026-03-24T02:00:01.018+0000] {taskinstance.py:2480} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='airflow' AIRFLOW_CTX_DAG_ID='ingest_xml_streaming' AIRFLOW_CTX_TASK_ID='xml_to_kafka' AIRFLOW_CTX_EXECUTION_DATE='2026-03-24T01:59:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-03-24T01:59:00+00:00'
+[2026-03-24T02:00:01.020+0000] {subprocess.py:63} INFO - Tmp dir root location: /tmp
+[2026-03-24T02:00:01.021+0000] {subprocess.py:75} INFO - Running command: ['/usr/bin/bash', '-c', 'python3 -c "import shutil; shutil.make_arc***(\'/tmp/engines\', \'zip\', \'/opt/airflow\', \'engines\')" && spark-submit --master spark://spark-master:7077 --num-executors 2 --executor-cores 2 --executor-memory 512m --driver-memory 512m --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0 --py-files /tmp/engines.zip /opt/airflow/scripts/ingest_xml_to_kafka.py']
+[2026-03-24T02:00:01.031+0000] {subprocess.py:86} INFO - Output:
+[2026-03-24T02:00:02.925+0000] {subprocess.py:93} INFO - :: loading settings :: url = jar:file:/home/airflow/.local/lib/python3.8/site-packages/pyspark/jars/ivy-2.5.1.jar!/org/apache/ivy/core/settings/ivysettings.xml
+[2026-03-24T02:00:02.994+0000] {subprocess.py:93} INFO - Ivy Default Cache set to: /home/airflow/.ivy2/cache
+[2026-03-24T02:00:02.995+0000] {subprocess.py:93} INFO - The jars for the packages stored in: /home/airflow/.ivy2/jars
+[2026-03-24T02:00:02.999+0000] {subprocess.py:93} INFO - org.apache.spark#spark-sql-kafka-0-10_2.12 added as a dependency
+[2026-03-24T02:00:03.000+0000] {subprocess.py:93} INFO - :: resolving dependencies :: org.apache.spark#spark-submit-parent-6094d434-9782-4f34-827d-9e1f2a07714a;1.0
+[2026-03-24T02:00:03.000+0000] {subprocess.py:93} INFO - 	confs: [default]
+[2026-03-24T02:00:03.154+0000] {subprocess.py:93} INFO - 	found org.apache.spark#spark-sql-kafka-0-10_2.12;3.5.0 in central
+[2026-03-24T02:00:03.200+0000] {subprocess.py:93} INFO - 	found org.apache.spark#spark-token-provider-kafka-0-10_2.12;3.5.0 in central
+[2026-03-24T02:00:03.223+0000] {subprocess.py:93} INFO - 	found org.apache.kafka#kafka-clients;3.4.1 in central
+[2026-03-24T02:00:03.245+0000] {subprocess.py:93} INFO - 	found org.lz4#lz4-java;1.8.0 in central
+[2026-03-24T02:00:03.263+0000] {subprocess.py:93} INFO - 	found org.xerial.snappy#snappy-java;1.1.10.3 in central
+[2026-03-24T02:00:03.279+0000] {subprocess.py:93} INFO - 	found org.slf4j#slf4j-api;2.0.7 in central
+[2026-03-24T02:00:03.301+0000] {subprocess.py:93} INFO - 	found org.apache.hadoop#hadoop-client-runtime;3.3.4 in central
+[2026-03-24T02:00:03.328+0000] {subprocess.py:93} INFO - 	found org.apache.hadoop#hadoop-client-api;3.3.4 in central
+[2026-03-24T02:00:03.348+0000] {subprocess.py:93} INFO - 	found commons-logging#commons-logging;1.1.3 in central
+[2026-03-24T02:00:03.364+0000] {subprocess.py:93} INFO - 	found com.google.code.findbugs#jsr305;3.0.0 in central
+[2026-03-24T02:00:03.378+0000] {subprocess.py:93} INFO - 	found org.apache.commons#commons-pool2;2.11.1 in central
+[2026-03-24T02:00:03.402+0000] {subprocess.py:93} INFO - :: resolution report :: resolve 389ms :: artifacts dl 13ms
+[2026-03-24T02:00:03.403+0000] {subprocess.py:93} INFO - 	:: modules in use:
+[2026-03-24T02:00:03.403+0000] {subprocess.py:93} INFO - 	com.google.code.findbugs#jsr305;3.0.0 from central in [default]
+[2026-03-24T02:00:03.403+0000] {subprocess.py:93} INFO - 	commons-logging#commons-logging;1.1.3 from central in [default]
+[2026-03-24T02:00:03.404+0000] {subprocess.py:93} INFO - 	org.apache.commons#commons-pool2;2.11.1 from central in [default]
+[2026-03-24T02:00:03.404+0000] {subprocess.py:93} INFO - 	org.apache.hadoop#hadoop-client-api;3.3.4 from central in [default]
+[2026-03-24T02:00:03.404+0000] {subprocess.py:93} INFO - 	org.apache.hadoop#hadoop-client-runtime;3.3.4 from central in [default]
+[2026-03-24T02:00:03.404+0000] {subprocess.py:93} INFO - 	org.apache.kafka#kafka-clients;3.4.1 from central in [default]
+[2026-03-24T02:00:03.404+0000] {subprocess.py:93} INFO - 	org.apache.spark#spark-sql-kafka-0-10_2.12;3.5.0 from central in [default]
+[2026-03-24T02:00:03.405+0000] {subprocess.py:93} INFO - 	org.apache.spark#spark-token-provider-kafka-0-10_2.12;3.5.0 from central in [default]
+[2026-03-24T02:00:03.405+0000] {subprocess.py:93} INFO - 	org.lz4#lz4-java;1.8.0 from central in [default]
+[2026-03-24T02:00:03.405+0000] {subprocess.py:93} INFO - 	org.slf4j#slf4j-api;2.0.7 from central in [default]
+[2026-03-24T02:00:03.405+0000] {subprocess.py:93} INFO - 	org.xerial.snappy#snappy-java;1.1.10.3 from central in [default]
+[2026-03-24T02:00:03.406+0000] {subprocess.py:93} INFO - 	---------------------------------------------------------------------
+[2026-03-24T02:00:03.406+0000] {subprocess.py:93} INFO - 	|                  |            modules            ||   artifacts   |
+[2026-03-24T02:00:03.406+0000] {subprocess.py:93} INFO - 	|       conf       | number| search|dwnlded|evicted|| number|dwnlded|
+[2026-03-24T02:00:03.406+0000] {subprocess.py:93} INFO - 	---------------------------------------------------------------------
+[2026-03-24T02:00:03.407+0000] {subprocess.py:93} INFO - 	|      default     |   11  |   0   |   0   |   0   ||   11  |   0   |
+[2026-03-24T02:00:03.407+0000] {subprocess.py:93} INFO - 	---------------------------------------------------------------------
+[2026-03-24T02:00:03.409+0000] {subprocess.py:93} INFO - :: retrieving :: org.apache.spark#spark-submit-parent-6094d434-9782-4f34-827d-9e1f2a07714a
+[2026-03-24T02:00:03.410+0000] {subprocess.py:93} INFO - 	confs: [default]
+[2026-03-24T02:00:03.417+0000] {subprocess.py:93} INFO - 	0 artifacts copied, 11 already retrieved (0kB/8ms)
+[2026-03-24T02:00:03.616+0000] {subprocess.py:93} INFO - 26/03/24 02:00:03 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+[2026-03-24T02:00:05.182+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Running Spark version 3.5.0
+[2026-03-24T02:00:05.183+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: OS info Linux, 6.8.0-106-generic, amd64
+[2026-03-24T02:00:05.183+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Java version 17.0.18
+[2026-03-24T02:00:05.201+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO ResourceUtils: ==============================================================
+[2026-03-24T02:00:05.202+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO ResourceUtils: No custom resources configured for spark.driver.
+[2026-03-24T02:00:05.202+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO ResourceUtils: ==============================================================
+[2026-03-24T02:00:05.202+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Submitted application: IngestXMLToKafka
+[2026-03-24T02:00:05.221+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO ResourceProfile: Default ResourceProfile created, executor resources: Map(cores -> name: cores, amount: 2, script: , vendor: , memory -> name: memory, amount: 512, script: , vendor: , offHeap -> name: offHeap, amount: 0, script: , vendor: ), task resources: Map(cpus -> name: cpus, amount: 1.0)
+[2026-03-24T02:00:05.230+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO ResourceProfile: Limiting resource is cpus at 2 tasks per executor
+[2026-03-24T02:00:05.231+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO ResourceProfileManager: Added ResourceProfile id: 0
+[2026-03-24T02:00:05.280+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SecurityManager: Changing view acls to: airflow
+[2026-03-24T02:00:05.280+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SecurityManager: Changing modify acls to: airflow
+[2026-03-24T02:00:05.281+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SecurityManager: Changing view acls groups to:
+[2026-03-24T02:00:05.281+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SecurityManager: Changing modify acls groups to:
+[2026-03-24T02:00:05.282+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users with view permissions: airflow; groups with view permissions: EMPTY; users with modify permissions: airflow; groups with modify permissions: EMPTY
+[2026-03-24T02:00:05.474+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO Utils: Successfully started service 'sparkDriver' on port 33423.
+[2026-03-24T02:00:05.507+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkEnv: Registering MapOutputTracker
+[2026-03-24T02:00:05.541+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkEnv: Registering BlockManagerMaster
+[2026-03-24T02:00:05.556+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO BlockManagerMasterEndpoint: Using org.apache.spark.storage.DefaultTopologyMapper for getting topology information
+[2026-03-24T02:00:05.557+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO BlockManagerMasterEndpoint: BlockManagerMasterEndpoint up
+[2026-03-24T02:00:05.560+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkEnv: Registering BlockManagerMasterHeartbeat
+[2026-03-24T02:00:05.580+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO DiskBlockManager: Created local directory at /tmp/blockmgr-788e8569-baee-46ee-b366-8006882a22fb
+[2026-03-24T02:00:05.594+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO MemoryStore: MemoryStore started with capacity 127.2 MiB
+[2026-03-24T02:00:05.610+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkEnv: Registering OutputCommitCoordinator
+[2026-03-24T02:00:05.729+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO JettyUtils: Start Jetty 0.0.0.0:4040 for SparkUI
+[2026-03-24T02:00:05.782+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 WARN Utils: Service 'SparkUI' could not bind on port 4040. Attempting port 4041.
+[2026-03-24T02:00:05.783+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 WARN Utils: Service 'SparkUI' could not bind on port 4041. Attempting port 4042.
+[2026-03-24T02:00:05.794+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO Utils: Successfully started service 'SparkUI' on port 4042.
+[2026-03-24T02:00:05.834+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added JAR file:///home/airflow/.ivy2/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.0.jar at spark://5e5232d564b8:33423/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.0.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.834+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added JAR file:///home/airflow/.ivy2/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.0.jar at spark://5e5232d564b8:33423/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.0.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.835+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added JAR file:///home/airflow/.ivy2/jars/org.apache.kafka_kafka-clients-3.4.1.jar at spark://5e5232d564b8:33423/jars/org.apache.kafka_kafka-clients-3.4.1.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.835+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added JAR file:///home/airflow/.ivy2/jars/com.google.code.findbugs_jsr305-3.0.0.jar at spark://5e5232d564b8:33423/jars/com.google.code.findbugs_jsr305-3.0.0.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.835+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added JAR file:///home/airflow/.ivy2/jars/org.apache.commons_commons-pool2-2.11.1.jar at spark://5e5232d564b8:33423/jars/org.apache.commons_commons-pool2-2.11.1.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.835+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added JAR file:///home/airflow/.ivy2/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar at spark://5e5232d564b8:33423/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.835+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added JAR file:///home/airflow/.ivy2/jars/org.lz4_lz4-java-1.8.0.jar at spark://5e5232d564b8:33423/jars/org.lz4_lz4-java-1.8.0.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.836+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added JAR file:///home/airflow/.ivy2/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar at spark://5e5232d564b8:33423/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.836+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added JAR file:///home/airflow/.ivy2/jars/org.slf4j_slf4j-api-2.0.7.jar at spark://5e5232d564b8:33423/jars/org.slf4j_slf4j-api-2.0.7.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.836+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added JAR file:///home/airflow/.ivy2/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar at spark://5e5232d564b8:33423/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.836+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added JAR file:///home/airflow/.ivy2/jars/commons-logging_commons-logging-1.1.3.jar at spark://5e5232d564b8:33423/jars/commons-logging_commons-logging-1.1.3.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.838+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added file file:///tmp/engines.zip at spark://5e5232d564b8:33423/files/engines.zip with timestamp 1774317605175
+[2026-03-24T02:00:05.840+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO Utils: Copying /tmp/engines.zip to /tmp/spark-61d32e8e-5a3e-4379-bb88-771d8a45c183/userFiles-cdc87b7e-42c0-4e81-9900-c9621ae35c0b/engines.zip
+[2026-03-24T02:00:05.851+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added file file:///home/airflow/.ivy2/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.0.jar at spark://5e5232d564b8:33423/files/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.0.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.851+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO Utils: Copying /home/airflow/.ivy2/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.0.jar to /tmp/spark-61d32e8e-5a3e-4379-bb88-771d8a45c183/userFiles-cdc87b7e-42c0-4e81-9900-c9621ae35c0b/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.0.jar
+[2026-03-24T02:00:05.857+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added file file:///home/airflow/.ivy2/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.0.jar at spark://5e5232d564b8:33423/files/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.0.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.858+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO Utils: Copying /home/airflow/.ivy2/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.0.jar to /tmp/spark-61d32e8e-5a3e-4379-bb88-771d8a45c183/userFiles-cdc87b7e-42c0-4e81-9900-c9621ae35c0b/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.0.jar
+[2026-03-24T02:00:05.865+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added file file:///home/airflow/.ivy2/jars/org.apache.kafka_kafka-clients-3.4.1.jar at spark://5e5232d564b8:33423/files/org.apache.kafka_kafka-clients-3.4.1.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.866+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO Utils: Copying /home/airflow/.ivy2/jars/org.apache.kafka_kafka-clients-3.4.1.jar to /tmp/spark-61d32e8e-5a3e-4379-bb88-771d8a45c183/userFiles-cdc87b7e-42c0-4e81-9900-c9621ae35c0b/org.apache.kafka_kafka-clients-3.4.1.jar
+[2026-03-24T02:00:05.877+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added file file:///home/airflow/.ivy2/jars/com.google.code.findbugs_jsr305-3.0.0.jar at spark://5e5232d564b8:33423/files/com.google.code.findbugs_jsr305-3.0.0.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.878+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO Utils: Copying /home/airflow/.ivy2/jars/com.google.code.findbugs_jsr305-3.0.0.jar to /tmp/spark-61d32e8e-5a3e-4379-bb88-771d8a45c183/userFiles-cdc87b7e-42c0-4e81-9900-c9621ae35c0b/com.google.code.findbugs_jsr305-3.0.0.jar
+[2026-03-24T02:00:05.885+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added file file:///home/airflow/.ivy2/jars/org.apache.commons_commons-pool2-2.11.1.jar at spark://5e5232d564b8:33423/files/org.apache.commons_commons-pool2-2.11.1.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.886+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO Utils: Copying /home/airflow/.ivy2/jars/org.apache.commons_commons-pool2-2.11.1.jar to /tmp/spark-61d32e8e-5a3e-4379-bb88-771d8a45c183/userFiles-cdc87b7e-42c0-4e81-9900-c9621ae35c0b/org.apache.commons_commons-pool2-2.11.1.jar
+[2026-03-24T02:00:05.893+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added file file:///home/airflow/.ivy2/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar at spark://5e5232d564b8:33423/files/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.894+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO Utils: Copying /home/airflow/.ivy2/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar to /tmp/spark-61d32e8e-5a3e-4379-bb88-771d8a45c183/userFiles-cdc87b7e-42c0-4e81-9900-c9621ae35c0b/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar
+[2026-03-24T02:00:05.929+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added file file:///home/airflow/.ivy2/jars/org.lz4_lz4-java-1.8.0.jar at spark://5e5232d564b8:33423/files/org.lz4_lz4-java-1.8.0.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.929+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO Utils: Copying /home/airflow/.ivy2/jars/org.lz4_lz4-java-1.8.0.jar to /tmp/spark-61d32e8e-5a3e-4379-bb88-771d8a45c183/userFiles-cdc87b7e-42c0-4e81-9900-c9621ae35c0b/org.lz4_lz4-java-1.8.0.jar
+[2026-03-24T02:00:05.937+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added file file:///home/airflow/.ivy2/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar at spark://5e5232d564b8:33423/files/org.xerial.snappy_snappy-java-1.1.10.3.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.938+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO Utils: Copying /home/airflow/.ivy2/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar to /tmp/spark-61d32e8e-5a3e-4379-bb88-771d8a45c183/userFiles-cdc87b7e-42c0-4e81-9900-c9621ae35c0b/org.xerial.snappy_snappy-java-1.1.10.3.jar
+[2026-03-24T02:00:05.945+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added file file:///home/airflow/.ivy2/jars/org.slf4j_slf4j-api-2.0.7.jar at spark://5e5232d564b8:33423/files/org.slf4j_slf4j-api-2.0.7.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.946+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO Utils: Copying /home/airflow/.ivy2/jars/org.slf4j_slf4j-api-2.0.7.jar to /tmp/spark-61d32e8e-5a3e-4379-bb88-771d8a45c183/userFiles-cdc87b7e-42c0-4e81-9900-c9621ae35c0b/org.slf4j_slf4j-api-2.0.7.jar
+[2026-03-24T02:00:05.953+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added file file:///home/airflow/.ivy2/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar at spark://5e5232d564b8:33423/files/org.apache.hadoop_hadoop-client-api-3.3.4.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.954+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO Utils: Copying /home/airflow/.ivy2/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar to /tmp/spark-61d32e8e-5a3e-4379-bb88-771d8a45c183/userFiles-cdc87b7e-42c0-4e81-9900-c9621ae35c0b/org.apache.hadoop_hadoop-client-api-3.3.4.jar
+[2026-03-24T02:00:05.980+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO SparkContext: Added file file:///home/airflow/.ivy2/jars/commons-logging_commons-logging-1.1.3.jar at spark://5e5232d564b8:33423/files/commons-logging_commons-logging-1.1.3.jar with timestamp 1774317605175
+[2026-03-24T02:00:05.981+0000] {subprocess.py:93} INFO - 26/03/24 02:00:05 INFO Utils: Copying /home/airflow/.ivy2/jars/commons-logging_commons-logging-1.1.3.jar to /tmp/spark-61d32e8e-5a3e-4379-bb88-771d8a45c183/userFiles-cdc87b7e-42c0-4e81-9900-c9621ae35c0b/commons-logging_commons-logging-1.1.3.jar
+[2026-03-24T02:00:06.093+0000] {subprocess.py:93} INFO - 26/03/24 02:00:06 INFO StandaloneAppClient$ClientEndpoint: Connecting to master spark://spark-master:7077...
+[2026-03-24T02:00:06.148+0000] {subprocess.py:93} INFO - 26/03/24 02:00:06 INFO TransportClientFactory: Successfully created connection to spark-master/172.18.0.4:7077 after 34 ms (0 ms spent in bootstraps)
+[2026-03-24T02:00:06.248+0000] {subprocess.py:93} INFO - 26/03/24 02:00:06 INFO StandaloneSchedulerBackend: Connected to Spark cluster with app ID app-20260324020006-0008
+[2026-03-24T02:00:06.260+0000] {subprocess.py:93} INFO - 26/03/24 02:00:06 INFO Utils: Successfully started service 'org.apache.spark.network.netty.NettyBlockTransferService' on port 35703.
+[2026-03-24T02:00:06.260+0000] {subprocess.py:93} INFO - 26/03/24 02:00:06 INFO NettyBlockTransferService: Server created on 5e5232d564b8:35703
+[2026-03-24T02:00:06.263+0000] {subprocess.py:93} INFO - 26/03/24 02:00:06 INFO BlockManager: Using org.apache.spark.storage.RandomBlockReplicationPolicy for block replication policy
+[2026-03-24T02:00:06.272+0000] {subprocess.py:93} INFO - 26/03/24 02:00:06 INFO BlockManagerMaster: Registering BlockManager BlockManagerId(driver, 5e5232d564b8, 35703, None)
+[2026-03-24T02:00:06.277+0000] {subprocess.py:93} INFO - 26/03/24 02:00:06 INFO BlockManagerMasterEndpoint: Registering block manager 5e5232d564b8:35703 with 127.2 MiB RAM, BlockManagerId(driver, 5e5232d564b8, 35703, None)
+[2026-03-24T02:00:06.280+0000] {subprocess.py:93} INFO - 26/03/24 02:00:06 INFO BlockManagerMaster: Registered BlockManager BlockManagerId(driver, 5e5232d564b8, 35703, None)
+[2026-03-24T02:00:06.282+0000] {subprocess.py:93} INFO - 26/03/24 02:00:06 INFO BlockManager: Initialized BlockManager: BlockManagerId(driver, 5e5232d564b8, 35703, None)
+[2026-03-24T02:00:06.472+0000] {subprocess.py:93} INFO - 26/03/24 02:00:06 INFO StandaloneSchedulerBackend: SchedulerBackend is ready for scheduling beginning after reached minRegisteredResourcesRatio: 0.0
+[2026-03-24T02:00:06.702+0000] {subprocess.py:93} INFO - [INFO] 100 arquivos XML encontrados em /opt/airflow/xmls
+[2026-03-24T02:00:06.735+0000] {subprocess.py:93} INFO - [INFO] 100 NF-es parseadas | 0 erros
+[2026-03-24T02:00:08.556+0000] {subprocess.py:93} INFO - root
+[2026-03-24T02:00:08.557+0000] {subprocess.py:93} INFO -  |-- id_nfe: string (nullable = true)
+[2026-03-24T02:00:08.557+0000] {subprocess.py:93} INFO -  |-- numero_nfe: string (nullable = true)
+[2026-03-24T02:00:08.557+0000] {subprocess.py:93} INFO -  |-- serie: string (nullable = true)
+[2026-03-24T02:00:08.557+0000] {subprocess.py:93} INFO -  |-- data_emissao: string (nullable = true)
+[2026-03-24T02:00:08.558+0000] {subprocess.py:93} INFO -  |-- natureza_operacao: string (nullable = true)
+[2026-03-24T02:00:08.558+0000] {subprocess.py:93} INFO -  |-- cnpj_emitente: string (nullable = true)
+[2026-03-24T02:00:08.558+0000] {subprocess.py:93} INFO -  |-- nome_emitente: string (nullable = true)
+[2026-03-24T02:00:08.558+0000] {subprocess.py:93} INFO -  |-- uf_emitente: string (nullable = true)
+[2026-03-24T02:00:08.559+0000] {subprocess.py:93} INFO -  |-- municipio_emitente: string (nullable = true)
+[2026-03-24T02:00:08.559+0000] {subprocess.py:93} INFO -  |-- cpf_destinatario: string (nullable = true)
+[2026-03-24T02:00:08.559+0000] {subprocess.py:93} INFO -  |-- cnpj_destinatario: string (nullable = true)
+[2026-03-24T02:00:08.559+0000] {subprocess.py:93} INFO -  |-- nome_destinatario: string (nullable = true)
+[2026-03-24T02:00:08.560+0000] {subprocess.py:93} INFO -  |-- valor_produtos: string (nullable = true)
+[2026-03-24T02:00:08.560+0000] {subprocess.py:93} INFO -  |-- valor_desconto: string (nullable = true)
+[2026-03-24T02:00:08.560+0000] {subprocess.py:93} INFO -  |-- valor_total_nf: string (nullable = true)
+[2026-03-24T02:00:08.560+0000] {subprocess.py:93} INFO -  |-- arquivo_origem: string (nullable = true)
+[2026-03-24T02:00:08.560+0000] {subprocess.py:93} INFO - 
+[2026-03-24T02:00:24.468+0000] {subprocess.py:93} INFO - 26/03/24 02:00:24 WARN TaskSchedulerImpl: Initial job has not accepted any resources; check your cluster UI to ensure that workers are registered and have sufficient resources
+[2026-03-24T02:00:31.223+0000] {subprocess.py:93} INFO - [INFO] Total de registros no DataFrame: 100
+[2026-03-24T02:00:33.600+0000] {subprocess.py:93} INFO - +-----------------------------------------------+----------+-----+-------------------------+-------------------+--------------+--------------------------+-----------+--------------------+----------------+-----------------+---------------------+--------------+--------------+--------------+--------------+
+[2026-03-24T02:00:33.601+0000] {subprocess.py:93} INFO - |id_nfe                                         |numero_nfe|serie|data_emissao             |natureza_operacao  |cnpj_emitente |nome_emitente             |uf_emitente|municipio_emitente  |cpf_destinatario|cnpj_destinatario|nome_destinatario    |valor_produtos|valor_desconto|valor_total_nf|arquivo_origem|
+[2026-03-24T02:00:33.601+0000] {subprocess.py:93} INFO - +-----------------------------------------------+----------+-----+-------------------------+-------------------+--------------+--------------------------+-----------+--------------------+----------------+-----------------+---------------------+--------------+--------------+--------------+--------------+
+[2026-03-24T02:00:33.602+0000] {subprocess.py:93} INFO - |NFe51210107698153000101550010003071721589229820|307172    |1    |2021-01-29T10:32:11-03:00|VENDA DE MERCADORIA|07698153000101|DUARTE SUPERMERCADOS LTDA |MT         |PIMENTA             |64293158782     |NULL             |HADASSA NUNES        |64.24         |0.00          |64.24         |nfe_001.xml   |
+[2026-03-24T02:00:33.602+0000] {subprocess.py:93} INFO - |NFe26201272569843000114550010009219221240261286|921922    |1    |2020-12-28T15:52:12-03:00|VENDA DE MERCADORIA|72569843000114|DA ROCHA HIPERMERCADO LTDA|PE         |MARTINS DE RODRIGUES|72863405900     |NULL             |SARAH DA CRUZ        |54.03         |3.58          |50.45         |nfe_002.xml   |
+[2026-03-24T02:00:33.602+0000] {subprocess.py:93} INFO - |NFe27240358367192000159550010008622321906680197|862232    |1    |2024-03-23T11:32:33-03:00|VENDA DE MERCADORIA|58367192000159|ARAÚJO SUPERMERCADOS LTDA |AL         |AZEVEDO             |12708493523     |NULL             |PEDRO MIGUEL SILVEIRA|22.95         |0.00          |22.95         |nfe_003.xml   |
+[2026-03-24T02:00:33.602+0000] {subprocess.py:93} INFO - |NFe11240353716094000166550020005134401251326107|513440    |2    |2024-03-23T18:01:51-03:00|VENDA DE MERCADORIA|53716094000166|SILVA MERCEARIA LTDA      |RO         |CALDEIRA            |21674083580     |NULL             |SRA. CAMILA MENDONÇA |138.93        |0.91          |138.02        |nfe_004.xml   |
+[2026-03-24T02:00:33.602+0000] {subprocess.py:93} INFO - |NFe42190357349802000129550010006760451984910597|676045    |1    |2019-03-17T09:54:00-03:00|VENDA DE MERCADORIA|57349802000129|FREITAS MERCADINHO LTDA   |SC         |NUNES DE GONÇALVES  |31462085989     |NULL             |SR. ISAQUE BRITO     |18.28         |0.00          |18.28         |nfe_005.xml   |
+[2026-03-24T02:00:33.603+0000] {subprocess.py:93} INFO - +-----------------------------------------------+----------+-----+-------------------------+-------------------+--------------+--------------------------+-----------+--------------------+----------------+-----------------+---------------------+--------------+--------------+--------------+--------------+
+[2026-03-24T02:00:33.603+0000] {subprocess.py:93} INFO - only showing top 5 rows
+[2026-03-24T02:00:33.603+0000] {subprocess.py:93} INFO - 
+[2026-03-24T02:00:33.769+0000] {subprocess.py:93} INFO - [INFO] 100 mensagens publicadas no tópico 'nfe-raw'
+[2026-03-24T02:00:34.884+0000] {subprocess.py:97} INFO - Command exited with return code 0
+[2026-03-24T02:00:34.925+0000] {taskinstance.py:1138} INFO - Marking task as SUCCESS. dag_id=ingest_xml_streaming, task_id=xml_to_kafka, execution_date=20260324T015900, start_date=20260324T020000, end_date=20260324T020034
+[2026-03-24T02:00:34.991+0000] {local_task_job_runner.py:234} INFO - Task exited with return code 0
+[2026-03-24T02:00:35.036+0000] {taskinstance.py:3280} INFO - 1 downstream tasks scheduled from follow-on schedule check

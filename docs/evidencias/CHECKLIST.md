@@ -40,3 +40,9 @@
 ## Dia 6: Finalização
 - [ ] Última revisão
 - [ ] Enviar link do repositório + currículo
+
+
+## Extras implementados além do escopo original
+
+- [X] Subir Superset
+- [ ] Criar analise do Star Schema

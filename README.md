@@ -369,5 +369,4 @@ Todos os testes usam **mocks** para rodar sem infraestrutura real (sem Spark, se
 
 ## Autor
 
-**Luís Felipe**
-Engenheiro de Dados
+**Luís Felipe Maio Toledo de Carvalho e Silva**

@@ -17,6 +17,7 @@ Diagrama:
     dim_localidade┘
 """
 
+import logging
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, year, month, dayofmonth, quarter,
@@ -25,6 +26,8 @@ from pyspark.sql.functions import (
     round as spark_round
 )
 from pyspark.sql.window import Window
+
+log = logging.getLogger(__name__)
 
 SILVER_PATH = "hdfs://namenode:8020/data/silver/nfe"
 GOLD_PATH   = "hdfs://namenode:8020/data/gold"
@@ -152,34 +155,44 @@ def load_gold(spark: SparkSession) -> dict:
     Returns:
         Dict com total de registros de cada tabela gerada.
     """
-    df = spark.read.parquet(SILVER_PATH)
+    df = None
+    cached_dims = []
 
-    # Cache do Silver: evita 4+ releituras (uma por dimensão + fato)
-    df.cache()
-    print(f"[GOLD] Registros lidos da Silver: {df.count()}")
+    try:
+        df = spark.read.parquet(SILVER_PATH)
+        df.cache()
+        log.info("[GOLD] Registros lidos da Silver: %d", df.count())
 
-    dim_e = _dim_emitente(df)
-    dim_d = _dim_data(df)
-    dim_l = _dim_localidade(df)
-    fato  = _fato_vendas(df, dim_e, dim_d, dim_l)
+        dim_e = _dim_emitente(df)
+        dim_d = _dim_data(df)
+        dim_l = _dim_localidade(df)
+        fato  = _fato_vendas(df, dim_e, dim_d, dim_l)
 
-    tabelas = {
-        "dim_emitente":   dim_e,
-        "dim_data":       dim_d,
-        "dim_localidade": dim_l,
-        "fato_vendas":    fato,
-    }
+        tabelas = {
+            "dim_emitente":   dim_e,
+            "dim_data":       dim_d,
+            "dim_localidade": dim_l,
+            "fato_vendas":    fato,
+        }
 
-    totais = {}
-    for nome, df_gold in tabelas.items():
-        # Cache antes de escrever: count() usa o cache, não relê o HDFS escrito
-        df_gold.cache()
-        total = df_gold.count()
-        path = f"{GOLD_PATH}/{nome}"
-        df_gold.write.mode("overwrite").parquet(path)
-        totais[nome] = total
-        print(f"[GOLD] {nome}: {total} registros gravados em {path}")
-        df_gold.unpersist()
+        totais = {}
+        for nome, df_gold in tabelas.items():
+            df_gold.cache()
+            cached_dims.append(df_gold)
+            total = df_gold.count()
+            path = f"{GOLD_PATH}/{nome}"
+            df_gold.write.mode("overwrite").parquet(path)
+            totais[nome] = total
+            log.info("[GOLD] %s: %d registros gravados em %s", nome, total, path)
 
-    df.unpersist()
-    return totais
+        return totais
+
+    except Exception as e:
+        log.error("[GOLD] Falha na construção do Star Schema: %s", str(e))
+        raise
+
+    finally:
+        for df_cached in cached_dims:
+            df_cached.unpersist()
+        if df is not None:
+            df.unpersist()

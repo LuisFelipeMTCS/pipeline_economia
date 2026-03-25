@@ -154,13 +154,58 @@ flowchart TD
 
 ---
 
+## Consultas Analíticas — Camada Gold
+
+Todas as queries rodam no Hive Editor (Hue → http://localhost:8888) sobre as tabelas do Star Schema.
+
+**Faturamento por UF e Região** — *Quais estados geram mais receita?*
+```sql
+SELECT l.uf, l.regiao,
+       COUNT(f.id_nfe)              AS quantidade_nfe,
+       ROUND(SUM(f.valor_total), 2) AS faturamento_total,
+       ROUND(AVG(f.valor_total), 2) AS ticket_medio
+FROM gold.fato_vendas f
+JOIN gold.dim_localidade l ON f.id_localidade = l.id_localidade
+GROUP BY l.uf, l.regiao
+ORDER BY faturamento_total DESC;
+```
+
+**Top 10 Emitentes com Participação no Total** — *Quem concentra mais faturamento?*
+```sql
+SELECT e.cnpj, e.nome, l.uf,
+       ROUND(SUM(f.valor_total), 2)                                            AS faturamento_total,
+       ROUND(100.0 * SUM(f.valor_total) / SUM(SUM(f.valor_total)) OVER (), 2) AS participacao_pct
+FROM gold.fato_vendas f
+JOIN gold.dim_emitente   e ON f.id_emitente   = e.id_emitente
+JOIN gold.dim_localidade l ON f.id_localidade = l.id_localidade
+GROUP BY e.cnpj, e.nome, l.uf
+ORDER BY faturamento_total DESC
+LIMIT 10;
+```
+
+**Evolução Mensal com Crescimento MoM** — *Como o faturamento variou mês a mês?*
+```sql
+SELECT d.ano, d.mes,
+       COUNT(f.id_nfe)              AS quantidade_nfe,
+       ROUND(SUM(f.valor_total), 2) AS faturamento_total,
+       ROUND(100.0 * (SUM(f.valor_total) - LAG(SUM(f.valor_total)) OVER (ORDER BY d.ano, d.mes))
+                   / LAG(SUM(f.valor_total)) OVER (ORDER BY d.ano, d.mes), 2) AS crescimento_pct
+FROM gold.fato_vendas f
+JOIN gold.dim_data d ON f.id_data = d.id_data
+GROUP BY d.ano, d.mes
+ORDER BY d.ano, d.mes;
+```
+
+---
+
 ## Diferenciais Técnicos
 
 | # | Diferencial | Detalhe |
 |---|---|---|
 | 1 | **42 testes unitários** | 100% mocks — sem Spark, Kafka ou HDFS — roda em < 10s |
 | 2 | **Quality Gate** | 4 assertions bloqueiam a Gold se Silver estiver corrompida |
-| 3 | **Star Schema Kimball** | Queries analíticas com window functions (LAG, OVER, Pareto) |
+| 3 | **Observabilidade** | `on_failure_callback` e `on_success_callback` em todas as tasks das 2 DAGs |
+| 4 | **Star Schema Kimball** | Queries analíticas com window functions (LAG, OVER, Pareto) |
 | 4 | **Idempotência** | Pipeline pode ser reexecutado N vezes com resultado idêntico |
 | 5 | **Cache estratégico** | `df.cache()` + `unpersist()` — evita rescans desnecessários de HDFS |
 | 6 | **Tabelas EXTERNAL** | `DROP TABLE` não apaga dados — Hive é catálogo, HDFS é storage |
@@ -205,6 +250,7 @@ pipeline_economia/
 │   │   ├── dag_ingest_xml.py          # DAG 1 — XMLs → Kafka
 │   │   └── dag_process_medallion.py   # DAG 2 — Kafka → Bronze → Silver → Gold
 │   └── scripts/
+│       ├── observability.py           # Callbacks de falha/sucesso (compartilhado entre DAGs)
 │       ├── ingest_xml_to_kafka.py     # Parser SEFAZ → Kafka
 │       ├── kafka_to_bronze.py         # Kafka → HDFS JSON
 │       ├── bronze_to_silver.py        # Bronze → Parquet limpo

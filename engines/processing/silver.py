@@ -7,8 +7,8 @@ Responsável por:
 3. Validar e limpar os dados:
    - Remover registros com campos obrigatórios nulos
    - Remover duplicatas por id_nfe (chave única da NF-e)
-   - Garantir tipos corretos (Double para valores monetários, Date para datas)
-   - Filtrar valores monetários inválidos (negativos)
+   - Garantir tipos corretos (Double para valores monetários)
+   - Filtrar valores monetários inválidos
 4. Salvar em formato Parquet no HDFS com overwrite
    Caminho: /data/silver/nfe/
 
@@ -18,12 +18,12 @@ Garantias da Silver:
 - Tipos de dados consistentes
 """
 
+import logging
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import (
-    col, get_json_object, trim
-)
+from pyspark.sql.functions import col, get_json_object, trim
 from pyspark.sql.types import DoubleType
 
+log = logging.getLogger(__name__)
 
 BRONZE_PATH = "hdfs://namenode:8020/data/bronze/nfe"
 SILVER_PATH = "hdfs://namenode:8020/data/silver/nfe"
@@ -73,7 +73,7 @@ def _deduplicar(df):
 
 
 def _validar_valores(df):
-    """Remove registros com valores monetários negativos ou zerados."""
+    """Remove registros com valores monetários inválidos ou nulos pós-cast."""
     return df.filter(
         "valor_total_nf > 0 AND valor_produtos > 0 AND valor_desconto >= 0"
     )
@@ -91,37 +91,44 @@ def load_silver(spark: SparkSession) -> int:
     """
     Lê a camada Bronze, aplica validações e salva como Parquet na Silver.
 
-    Pipeline de qualidade:
-        Bronze → extração → validação obrigatórios → deduplicação
-             → validação valores → normalização → Silver
-
     Returns:
         Total de registros únicos e válidos gravados na camada Silver
     """
-    df_bronze = spark.read.json(BRONZE_PATH)
+    df_bronze = None
+    df = None
 
-    # Cache do Bronze: evita reler HDFS em cada transformação subsequente
-    df_bronze.cache()
-    total_bronze = df_bronze.count()
-    print(f"[SILVER] Registros lidos do Bronze: {total_bronze}")
+    try:
+        df_bronze = spark.read.json(BRONZE_PATH)
+        df_bronze.cache()
+        total_bronze = df_bronze.count()
+        log.info("[SILVER] Registros lidos do Bronze: %d", total_bronze)
 
-    df = _extrair_campos(df_bronze)
+        df = _extrair_campos(df_bronze)
+        df = _validar_obrigatorios(df)
+        df = _deduplicar(df)
+        df = _validar_valores(df)
+        df = _normalizar_strings(df)
 
-    # Aplica todas as transformações como pipeline lazy — sem Actions intermediárias
-    df = _validar_obrigatorios(df)
-    df = _deduplicar(df)
-    df = _validar_valores(df)
-    df = _normalizar_strings(df)
+        df.cache()
+        total = df.count()
 
-    # Cache antes de escrever: único scan real do pipeline transformado
-    df.cache()
-    total = df.count()
+        # Alerta se houve perda significativa de registros por cast inválido
+        if total < total_bronze:
+            log.warning(
+                "[SILVER] %d registros descartados (nulos, duplicatas ou cast inválido)",
+                total_bronze - total,
+            )
 
-    df.write.mode("overwrite").parquet(SILVER_PATH)
+        df.write.mode("overwrite").parquet(SILVER_PATH)
+        log.info("[SILVER] %d registros gravados em %s", total, SILVER_PATH)
+        return total
 
-    print(f"[SILVER] {total} registros únicos e válidos gravados em {SILVER_PATH}")
+    except Exception as e:
+        log.error("[SILVER] Falha no processamento: %s", str(e))
+        raise
 
-    df_bronze.unpersist()
-    df.unpersist()
-
-    return total
+    finally:
+        if df_bronze is not None:
+            df_bronze.unpersist()
+        if df is not None:
+            df.unpersist()

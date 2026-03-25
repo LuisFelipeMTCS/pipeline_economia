@@ -8,9 +8,14 @@ Fluxo:
     kafka_to_bronze >> bronze_to_silver >> validate_silver >> silver_to_gold
 """
 
+import sys
+sys.path.insert(0, "/opt/airflow/scripts")
+
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from datetime import datetime, timedelta
+
+from observability import on_task_failure, on_task_success  # type: ignore[import]
 
 
 SPARK_SUBMIT = (
@@ -30,6 +35,8 @@ default_args = {
     "start_date": datetime(2026, 3, 22),
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
+    "on_failure_callback": on_task_failure,
+    "on_success_callback": on_task_success,
 }
 
 with DAG(

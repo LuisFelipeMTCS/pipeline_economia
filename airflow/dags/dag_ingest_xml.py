@@ -8,11 +8,16 @@ Fluxo:
     xml_to_kafka → validar_kafka → acionar_medallion
 """
 
+import sys
+sys.path.insert(0, "/opt/airflow/scripts")
+
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from datetime import datetime, timedelta
+
+from observability import on_task_failure, on_task_success  # type: ignore[import]
 
 
 def validar_mensagens_kafka():
@@ -48,6 +53,8 @@ default_args = {
     "start_date": datetime(2026, 3, 21),
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
+    "on_failure_callback": on_task_failure,
+    "on_success_callback": on_task_success,
 }
 
 with DAG(

@@ -38,11 +38,6 @@
 - [X] Commitar com mensagens padronizadas
 
 ## Dia 6: Finalização
-- [ ] Última revisão
-- [ ] Enviar link do repositório + currículo
+- [X] Última revisão
+- [X] Enviar link do repositório + currículo
 
-
-## Extras implementados além do escopo original
-
-- [X] Subir Superset
-- [ ] Criar analise do Star Schema

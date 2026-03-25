@@ -20,8 +20,7 @@ Garantias da Silver:
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
-    col, get_json_object, to_timestamp, to_date,
-    regexp_replace, trim
+    col, get_json_object, trim
 )
 from pyspark.sql.types import DoubleType
 
@@ -66,9 +65,9 @@ def _validar_obrigatorios(df):
 
 def _deduplicar(df):
     """
-    Remove duplicatas mantendo o registro mais recente por id_nfe.
+    Remove duplicatas por id_nfe.
     Garante exatamente 1 registro por NF-e independente de quantas
-    vezes o pipeline foi executado.
+    vezes o pipeline foi executado (idempotência contra at-least-once do Kafka).
     """
     return df.dropDuplicates(["id_nfe"])
 
@@ -100,27 +99,29 @@ def load_silver(spark: SparkSession) -> int:
         Total de registros únicos e válidos gravados na camada Silver
     """
     df_bronze = spark.read.json(BRONZE_PATH)
+
+    # Cache do Bronze: evita reler HDFS em cada transformação subsequente
+    df_bronze.cache()
     total_bronze = df_bronze.count()
     print(f"[SILVER] Registros lidos do Bronze: {total_bronze}")
 
     df = _extrair_campos(df_bronze)
 
-    antes = df.count()
+    # Aplica todas as transformações como pipeline lazy — sem Actions intermediárias
     df = _validar_obrigatorios(df)
-    print(f"[SILVER] Removidos por campos nulos: {antes - df.count()}")
-
-    antes = df.count()
     df = _deduplicar(df)
-    print(f"[SILVER] Removidos por duplicata (id_nfe): {antes - df.count()}")
-
-    antes = df.count()
     df = _validar_valores(df)
-    print(f"[SILVER] Removidos por valores inválidos: {antes - df.count()}")
-
     df = _normalizar_strings(df)
+
+    # Cache antes de escrever: único scan real do pipeline transformado
+    df.cache()
+    total = df.count()
 
     df.write.mode("overwrite").parquet(SILVER_PATH)
 
-    total = df.count()
     print(f"[SILVER] {total} registros únicos e válidos gravados em {SILVER_PATH}")
+
+    df_bronze.unpersist()
+    df.unpersist()
+
     return total

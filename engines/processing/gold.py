@@ -62,12 +62,15 @@ def _map_expr(col_name, mapping, default="Não identificado"):
 
 
 def _dim_emitente(df):
-    """Dimensão com dados cadastrais únicos por emitente."""
-    window = Window.orderBy("cnpj_emitente")
+    """
+    Dimensão com dados cadastrais únicos por emitente.
+    Surrogate key gerada com monotonically_increasing_id — evita shuffle global
+    que dense_rank() sem partitionBy causaria em datasets grandes.
+    """
     return (
         df.select("cnpj_emitente", "nome_emitente", "uf_emitente", "municipio_emitente")
           .dropDuplicates(["cnpj_emitente"])
-          .withColumn("id_emitente", dense_rank().over(window))
+          .withColumn("id_emitente", monotonically_increasing_id())
           .select(
               col("id_emitente"),
               col("cnpj_emitente").alias("cnpj"),
@@ -79,8 +82,10 @@ def _dim_emitente(df):
 
 
 def _dim_data(df):
-    """Dimensão calendário derivada das datas de emissão."""
-    window = Window.orderBy("ts")
+    """
+    Dimensão calendário derivada das datas de emissão.
+    Surrogate key gerada com monotonically_increasing_id.
+    """
     return (
         df.select(col("data_emissao").cast("timestamp").alias("ts"))
           .dropDuplicates(["ts"])
@@ -89,20 +94,22 @@ def _dim_data(df):
           .withColumn("mes",        month("ts"))
           .withColumn("dia",        dayofmonth("ts"))
           .withColumn("trimestre",  quarter("ts"))
-          .withColumn("id_data",    dense_rank().over(window))
+          .withColumn("id_data",    monotonically_increasing_id())
           .select("id_data", "data", "dia", "mes", "ano", "trimestre")
     )
 
 
 def _dim_localidade(df):
-    """Dimensão geográfica com UF, região e nome completo do estado."""
-    window = Window.orderBy("uf_emitente")
+    """
+    Dimensão geográfica com UF, região e nome completo do estado.
+    Surrogate key gerada com monotonically_increasing_id.
+    """
     return (
         df.select("uf_emitente")
           .dropDuplicates(["uf_emitente"])
           .withColumn("regiao",          _map_expr("uf_emitente", REGIOES))
           .withColumn("estado_completo", _map_expr("uf_emitente", ESTADOS))
-          .withColumn("id_localidade",   dense_rank().over(window))
+          .withColumn("id_localidade",   monotonically_increasing_id())
           .select(
               col("id_localidade"),
               col("uf_emitente").alias("uf"),
@@ -146,6 +153,9 @@ def load_gold(spark: SparkSession) -> dict:
         Dict com total de registros de cada tabela gerada.
     """
     df = spark.read.parquet(SILVER_PATH)
+
+    # Cache do Silver: evita 4+ releituras (uma por dimensão + fato)
+    df.cache()
     print(f"[GOLD] Registros lidos da Silver: {df.count()}")
 
     dim_e = _dim_emitente(df)
@@ -162,10 +172,14 @@ def load_gold(spark: SparkSession) -> dict:
 
     totais = {}
     for nome, df_gold in tabelas.items():
+        # Cache antes de escrever: count() usa o cache, não relê o HDFS escrito
+        df_gold.cache()
+        total = df_gold.count()
         path = f"{GOLD_PATH}/{nome}"
         df_gold.write.mode("overwrite").parquet(path)
-        total = df_gold.count()
         totais[nome] = total
         print(f"[GOLD] {nome}: {total} registros gravados em {path}")
+        df_gold.unpersist()
 
+    df.unpersist()
     return totais

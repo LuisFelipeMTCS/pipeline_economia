@@ -219,6 +219,55 @@ docker exec pipeline_economia-airflow-1 bash -c \
   "pip install pytest -q && python3 -m pytest /opt/airflow/tests/ -v"
 ```
 
+### DDLs — Inicialização das Tabelas Hive
+
+Execute no **Hue → Hive Editor** uma única vez após o `docker compose up`:
+
+```sql
+CREATE DATABASE IF NOT EXISTS bronze;
+CREATE DATABASE IF NOT EXISTS silver;
+CREATE DATABASE IF NOT EXISTS gold;
+
+-- Bronze: payload bruto do Kafka
+CREATE EXTERNAL TABLE IF NOT EXISTS bronze.nfe (payload STRING)
+STORED AS TEXTFILE
+LOCATION 'hdfs://namenode:8020/data/bronze/nfe';
+
+-- Silver: campos tipados, deduplicados e validados
+CREATE EXTERNAL TABLE IF NOT EXISTS silver.nfe (
+  id_nfe STRING, numero_nfe STRING, serie STRING, data_emissao STRING,
+  natureza_operacao STRING, cnpj_emitente STRING, nome_emitente STRING,
+  uf_emitente STRING, municipio_emitente STRING, nome_destinatario STRING,
+  valor_produtos DOUBLE, valor_desconto DOUBLE, valor_total_nf DOUBLE,
+  arquivo_origem STRING
+) STORED AS PARQUET
+LOCATION 'hdfs://namenode:8020/data/silver/nfe';
+
+-- Gold: Star Schema Kimball
+CREATE EXTERNAL TABLE IF NOT EXISTS gold.dim_emitente (
+  id_emitente BIGINT, cnpj STRING, nome STRING, uf STRING, municipio STRING
+) STORED AS PARQUET
+LOCATION 'hdfs://namenode:8020/data/gold/dim_emitente';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS gold.dim_data (
+  id_data BIGINT, data STRING, dia INT, mes INT, ano INT, trimestre INT
+) STORED AS PARQUET
+LOCATION 'hdfs://namenode:8020/data/gold/dim_data';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS gold.dim_localidade (
+  id_localidade BIGINT, uf STRING, regiao STRING, estado_completo STRING
+) STORED AS PARQUET
+LOCATION 'hdfs://namenode:8020/data/gold/dim_localidade';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS gold.fato_vendas (
+  id_venda BIGINT, id_nfe STRING, id_emitente BIGINT, id_data BIGINT,
+  id_localidade BIGINT, valor_total DOUBLE, valor_produtos DOUBLE, valor_desconto DOUBLE
+) STORED AS PARQUET
+LOCATION 'hdfs://namenode:8020/data/gold/fato_vendas';
+```
+
+---
+
 ### Serviços
 
 | Serviço | URL | Credenciais |

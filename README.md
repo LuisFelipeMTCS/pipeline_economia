@@ -204,8 +204,12 @@ ORDER BY d.ano, d.mes;
 # 1. Subir toda a infraestrutura
 docker compose up -d
 
-# 2. Inicializar tabelas no Hive
-#    Acesse http://localhost:8888 (admin/admin) → Hive Editor → execute os DDLs abaixo
+# 2. Inicializar tabelas no Hive (apenas uma vez após o primeiro docker compose up)
+#    Acesse http://localhost:8888 (admin/admin) → Hive Editor → execute os DDLs da seção abaixo
+#
+#    Nota: o Spark grava os dados diretamente no HDFS — independente do Hive estar rodando.
+#    O Hive atua apenas como catálogo de metadados. As tabelas são EXTERNAL, ou seja,
+#    um DROP TABLE nunca apaga os dados do HDFS.
 
 # 3. Disparar o pipeline
 #    Acesse http://localhost:8081 (admin/admin) → DAG: ingest_xml_streaming → Trigger

@@ -22,28 +22,39 @@ Pipeline de dados completo para ingestão, processamento e análise de **100 Not
 
 ## Arquitetura
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Apache Airflow                           │
-│   DAG 1: ingest_xml_streaming    DAG 2: process_medallion       │
-│   [xml_to_kafka]          [kafka_to_bronze]                     │
-│                           [bronze_to_silver]                    │
-│                           [validate_silver]  ← quality gate     │
-│                           [silver_to_gold]                      │
-└──────────────┬──────────────────────┬───────────────────────────┘
-               │                      │
-        ┌──────▼──────┐        ┌──────▼──────────────────────────┐
-        │ Apache Kafka │        │              HDFS               │
-        │  2 brokers   │        │  /data/bronze/  (JSON raw)      │
-        │  1 tópico    │        │  /data/silver/  (Parquet clean) │
-        └──────┬───────┘        │  /data/gold/    (Star Schema)   │
-               │                └──────────────┬──────────────────┘
-        ┌──────▼──────┐                        │
-        │ Apache Spark │                ┌──────▼──────┐
-        │  1 Master    │                │ Apache Hive │
-        │  2 Workers   │                │  3 databases│
-        └─────────────┘                │  12 tabelas │
-                                       └─────────────┘
+
+```mermaid
+flowchart LR
+    subgraph Ingestão
+        XML["📂 XMLs NF-e\nSEFAZ 3.10"]
+        DAG1["⚙️ DAG 1\nAirflow"]
+    end
+
+    subgraph Streaming
+        K["📨 Apache Kafka\n2 brokers · RF=2"]
+    end
+
+    subgraph Processamento
+        DAG2["⚙️ DAG 2\nAirflow"]
+        SPARK["⚡ Apache Spark\n1 master · 2 workers"]
+    end
+
+    subgraph Medalhão
+        B["🥉 Bronze\nJSON raw"]
+        S["🥈 Silver\nParquet · dedup · validated"]
+        QG{"🔒 Quality\nGate"}
+        G["🥇 Gold\nStar Schema Kimball"]
+    end
+
+    subgraph Analytics
+        HIVE["🐝 Apache Hive\n3 databases · 6 tabelas"]
+        HUE["🖥️ Hue\nSQL Editor"]
+    end
+
+    XML --> DAG1 --> K --> DAG2 --> SPARK
+    SPARK --> B --> S --> QG
+    QG -->|✅ 4 assertions OK| G --> HIVE --> HUE
+    QG -->|❌ falha| STOP["🚫 Pipeline\ninterrompido"]
 ```
 
 ---
@@ -156,29 +167,50 @@ Tabelas agregadas são rígidas — cada nova pergunta de negócio exige reproce
 
 #### Modelo Dimensional
 
+---
+
+## Modelo Dimensional (Star Schema Kimball)
+
+```mermaid
+erDiagram
+    dim_emitente {
+        bigint id_emitente PK
+        string cnpj
+        string nome
+        string uf
+        string municipio
+    }
+    dim_data {
+        bigint id_data PK
+        string data
+        int dia
+        int mes
+        int ano
+        int trimestre
+    }
+    dim_localidade {
+        bigint id_localidade PK
+        string uf
+        string regiao
+        string estado_completo
+    }
+    fato_vendas {
+        bigint id_venda PK
+        string id_nfe
+        bigint id_emitente FK
+        bigint id_data FK
+        bigint id_localidade FK
+        double valor_total
+        double valor_produtos
+        double valor_desconto
+    }
+
+    fato_vendas }o--|| dim_emitente : "id_emitente"
+    fato_vendas }o--|| dim_data : "id_data"
+    fato_vendas }o--|| dim_localidade : "id_localidade"
 ```
-                    dim_emitente
-                  ┌──────────────────┐
-                  │ id_emitente PK   │
-                  │ cnpj             │
-                  │ nome             │
-                  │ uf               │
-                  │ municipio        │
-                  └────────┬─────────┘
-                           │
-dim_data                   │                dim_localidade
-┌──────────────┐    ┌──────▼───────────┐   ┌──────────────────┐
-│ id_data PK   │    │   fato_vendas    │   │ id_localidade PK │
-│ data         ├────│ id_venda PK      ├───│ uf               │
-│ dia          │    │ id_nfe           │   │ regiao           │
-│ mes          │    │ id_emitente FK   │   │ estado_completo  │
-│ ano          │    │ id_data FK       │   └──────────────────┘
-│ trimestre    │    │ id_localidade FK │
-└──────────────┘    │ valor_total      │
-                    │ valor_produtos   │
-                    │ valor_desconto   │
-                    └──────────────────┘
-```
+
+---
 
 #### Queries Analíticas
 

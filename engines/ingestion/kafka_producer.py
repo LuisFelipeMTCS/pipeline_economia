@@ -9,7 +9,7 @@ import json
 from kafka import KafkaProducer
 
 
-def create_producer(bootstrap_servers: str = "kafka:29092") -> KafkaProducer:
+def create_producer(bootstrap_servers: str = "kafka:29092,kafka-2:29093") -> KafkaProducer:
     """
     Cria e retorna uma instância do KafkaProducer.
 

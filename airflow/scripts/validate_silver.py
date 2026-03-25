@@ -2,7 +2,7 @@
 Validação de qualidade da camada Silver.
 
 Assertions executadas:
-1. Total de registros = 100
+1. Total de registros = TOTAL_ESPERADO (configurável via env var SILVER_TOTAL_ESPERADO)
 2. Zero duplicatas por id_nfe
 3. Zero valores monetários inválidos
 4. Zero nulos nos campos obrigatórios
@@ -13,9 +13,10 @@ fazendo a task do Airflow falhar e interrompendo o pipeline.
 
 from pyspark.sql import SparkSession
 import sys
+import os
 
-SILVER_PATH = "hdfs://namenode:8020/data/silver/nfe"
-TOTAL_ESPERADO = 100
+SILVER_PATH      = "hdfs://namenode:8020/data/silver/nfe"
+TOTAL_ESPERADO   = int(os.getenv("SILVER_TOTAL_ESPERADO", "100"))
 
 
 def validar(condicao: bool, mensagem: str):
@@ -35,6 +36,9 @@ def main():
     spark.sparkContext.setLogLevel("WARN")
 
     df = spark.read.parquet(SILVER_PATH)
+
+    # Cache: as 4 validações usam o mesmo DataFrame — 1 leitura de HDFS, não 4
+    df.cache()
     total = df.count()
 
     print(f"\n=== Validação da camada Silver ===")
@@ -66,6 +70,8 @@ def main():
         nulos_obrigatorios == 0,
         f"Zero nulos em campos obrigatórios (encontrado: {nulos_obrigatorios})"
     )
+
+    df.unpersist()
 
     print("\n=== Todas as validações passaram. Silver aprovada. ===\n")
     spark.stop()

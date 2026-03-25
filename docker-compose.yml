@@ -183,6 +183,7 @@ services:
       - kafka
       - postgres
 
+
 volumes:
   postgres-data:
   namenode-data:

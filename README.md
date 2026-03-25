@@ -1,25 +1,27 @@
-#  NF-e Streaming Pipeline — Arquitetura Medalhão com Star Schema
+# Pipeline de Dados NF-e Streaming — Arquitetura Medalhão com Star Schema
 
-<div align="center">
-
-![Spark](https://img.shields.io/badge/Apache%20Spark-3.5.0-E25A1C?style=for-the-badge&logo=apachespark&logoColor=white)
-![Kafka](https://img.shields.io/badge/Apache%20Kafka-3.x-231F20?style=for-the-badge&logo=apachekafka&logoColor=white)
-![Airflow](https://img.shields.io/badge/Apache%20Airflow-2.x-017CEE?style=for-the-badge&logo=apacheairflow&logoColor=white)
-![Hive](https://img.shields.io/badge/Apache%20Hive-2.3.2-FDEE21?style=for-the-badge&logo=apachehive&logoColor=black)
-![Python](https://img.shields.io/badge/Python-3.8-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-
-**Pipeline event-driven completo para ingestão, qualidade e análise de Notas Fiscais Eletrônicas (NF-e) no padrão SEFAZ.**
-
-*Desenvolvido como teste técnico para a vaga de Engenheiro de Dados Sênior na **Indra Group / Minsait**.*
-
-</div>
+> Projeto desenvolvido como teste técnico para a vaga de **Engenheiro de Dados Sênior** na **Indra Group / Minsait**, e mantido como portfólio de referência em Engenharia de Dados com tecnologias do ecossistema Hadoop/Spark.
 
 ---
 
 ## Visão Geral
 
-Este projeto implementa um pipeline de dados de ponta a ponta que processa **100 NF-es (XMLs SEFAZ)** através de uma arquitetura event-driven, aplicando qualidade de dados em cada camada e entregando um **Star Schema analítico** pronto para consultas de negócio.
+Pipeline de dados completo para ingestão, processamento e análise de **100 Notas Fiscais Eletrônicas (NF-e)** no padrão SEFAZ, implementando:
+
+- **Arquitetura Medalhão** (Bronze → Silver → Gold)
+- **Star Schema** (modelagem dimensional Kimball) na camada Gold
+- **Streaming** com Apache Kafka (2 brokers)
+- **Processamento distribuído** com Apache Spark (cluster com 2 workers)
+- **Orquestração** com Apache Airflow (2 DAGs encadeadas)
+- **Armazenamento** em HDFS com catálogo Hive
+- **Visualização** via Hue (File Browser + Hive Editor)
+- **Qualidade de dados** com validações explícitas e task de assertion no Airflow
+- **Testes unitários** cobrindo todas as camadas (42 testes)
+
+---
+
+## Arquitetura
+
 
 ```mermaid
 flowchart LR
@@ -57,33 +59,113 @@ flowchart LR
 
 ---
 
+## Stack Tecnológica e Decisões de Arquitetura
+
+### Apache Kafka — Por que 2 brokers?
+
+Kafka é a espinha dorsal do streaming. Utilizei **2 brokers** (`kafka:29092` e `kafka-2:29093`) com **fator de replicação 2** para garantir:
+
+- **Alta disponibilidade** — se um broker cair, o outro assume
+- **Paralelismo** — produtores e consumidores podem se conectar a brokers diferentes
+- **Resiliência** — nenhuma mensagem de NF-e é perdida
+
+O tópico `nfe-raw` recebe os JSONs das notas fiscais publicados pelo PySpark via `kafka-python`.
+
+### Apache Spark — Por que cluster mode com 2 workers?
+
+O Spark foi configurado em **modo cluster standalone** (1 Master + 2 Workers) para simular um ambiente de produção real. Cada `spark-submit` distribui o processamento entre os workers, permitindo:
+
+- **Paralelismo real** na leitura do Kafka (batch) e escrita no HDFS
+- **Separação de responsabilidades** — driver no Airflow, executors nos workers
+- **Escalabilidade** — basta adicionar mais workers ao `docker-compose.yml`
+
+Utilizei **Spark 3.5** com o conector `spark-sql-kafka-0-10` para leitura batch do Kafka.
+
+### Apache Airflow — Por que 2 DAGs?
+
+Separar em 2 DAGs respeita o princípio de **responsabilidade única**:
+
+| DAG | Responsabilidade | Schedule |
+|---|---|---|
+| `ingest_xml_streaming` | Leitura dos XMLs → Kafka | A cada hora |
+| `process_medallion` | Kafka → Bronze → Silver → Gold | Acionada pela DAG 1 |
+
+A DAG 1 dispara a DAG 2 via `TriggerDagRunOperator`, garantindo que o processamento só começa após a ingestão estar completa. Isso evita condições de corrida e torna o pipeline **idempotente**.
+
+### HDFS — Por que não armazenar direto no Hive?
+
+O HDFS é o **sistema de arquivos distribuído** que desacopla o armazenamento do processamento. Vantagens:
+
+- Spark, Hive e qualquer outra ferramenta podem ler os mesmos dados
+- Dados persistem independente do container Hive estar rodando
+- Permite reprocessar uma camada sem reingestion (ex: reprocessar Silver sem reprocessar Bronze)
+
+### Apache Hive — Por que tabelas EXTERNAL?
+
+Todas as tabelas são **EXTERNAL** apontando para caminhos HDFS. Isso significa:
+
+- `DROP TABLE` não apaga os dados do HDFS
+- O Spark escreve diretamente no HDFS e o Hive apenas lê
+- Múltiplas ferramentas (Hue, Superset) acessam os mesmos dados via SQL
+
+---
+
 ## Arquitetura Medalhão
 
-| | 🥉 Bronze | 🥈 Silver | 🥇 Gold |
-|---|---|---|---|
-| **Formato** | JSON (raw) | Parquet · Snappy | Parquet · Star Schema |
-| **Conteúdo** | Payload completo da NF-e | Campos tipados · deduplicados · validados | Dimensões + Fato (Kimball) |
-| **Caminho HDFS** | `/data/bronze/nfe/` | `/data/silver/nfe/` | `/data/gold/{tabela}/` |
-| **Tabela Hive** | `bronze.nfe` | `silver.nfe` | `gold.dim_*` · `gold.fato_vendas` |
-| **Propósito** | Audit log imutável — reprocessamento sem recoletar do Kafka | Dados confiáveis para análise | Data Warehouse analítico |
+### Bronze — Dados Brutos
 
-### Regras de Qualidade — Camada Silver
+- **Formato:** JSON (1 arquivo por execução do pipeline)
+- **Conteúdo:** Payload completo da NF-e sem transformações
+- **Caminho HDFS:** `/data/bronze/nfe/`
+- **Tabela Hive:** `bronze.nfe`
 
-| Validação | Regra | Proteção |
-|---|---|---|
-| Campos obrigatórios | `id_nfe`, `cnpj_emitente`, `valor_total_nf`, `data_emissao` não nulos | Evita NF-es não rastreáveis |
-| Deduplicação | `dropDuplicates(["id_nfe"])` | Kafka *at-least-once* pode reenviar a mesma nota |
-| Valores monetários | `valor_total > 0`, `valor_produtos > 0`, `valor_desconto >= 0` | Protege agregações financeiras |
-| Normalização | `trim()` em campos de texto | Evita duplicatas por espaços invisíveis em JOINs |
+**Por que JSON na Bronze?**
+A Bronze deve refletir exatamente o que veio da fonte. Se houver erro no parsing posterior, os dados originais estão preservados para reprocessamento.
 
-### Quality Gate — 4 Assertions antes da Gold
+### Silver — Dados Limpos
+
+- **Formato:** Parquet (compressão Snappy)
+- **Conteúdo:** Campos tipados, deduplicados e validados
+- **Caminho HDFS:** `/data/silver/nfe/`
+- **Tabela Hive:** `silver.nfe`
+
+**Pipeline de qualidade aplicado:**
+
+```
+Bronze → extração de campos → validação de nulos → deduplicação → validação de valores → normalização → Silver
+```
+
+| Validação | Regra |
+|---|---|
+| Campos obrigatórios | `id_nfe`, `cnpj_emitente`, `valor_total_nf`, `data_emissao` não nulos |
+| Deduplicação | `dropDuplicates(["id_nfe"])` — exatamente 1 NF-e por `id_nfe` |
+| Valores monetários | `valor_total_nf > 0`, `valor_produtos > 0`, `valor_desconto >= 0` |
+| Normalização | `trim()` em campos de texto |
+
+**Por que Parquet na Silver?**
+Parquet é colunar — consultas que leem apenas algumas colunas (ex: `valor_total_nf`) leem muito menos dados do disco. Ideal para analytics.
+
+**Task de validação explícita no Airflow:**
+A task `validate_silver` roda 4 assertions após a escrita. Se qualquer uma falhar, o pipeline para antes de popular a Gold:
 
 ```python
-assert total == 100            # volume esperado — detecta perda de eventos
-assert duplicatas == 0         # zero duplicatas após deduplicação
-assert nulos == 0              # zero campos obrigatórios nulos
-assert valores_invalidos == 0  # zero valores monetários corrompidos
+assert total == 100           # total esperado
+assert duplicatas == 0        # zero duplicatas
+assert nulos == 0             # zero campos obrigatórios nulos
+assert valores_invalidos == 0 # zero valores monetários inválidos
 ```
+
+### Gold — Star Schema (Kimball)
+
+- **Formato:** Parquet por tabela
+- **Caminho HDFS:** `/data/gold/{tabela}/`
+- **Database Hive:** `gold`
+
+**Por que Star Schema e não tabelas agregadas?**
+
+Tabelas agregadas são rígidas — cada nova pergunta de negócio exige reprocessamento. O Star Schema permite **qualquer análise via JOIN** sem reprocessar dados, é extensível (nova dimensão = nova tabela) e é o padrão da indústria para Data Warehouses (metodologia Kimball).
+
+#### Modelo Dimensional
 
 ---
 
@@ -130,153 +212,38 @@ erDiagram
 
 ---
 
-## Orquestração — Apache Airflow
+#### Queries Analíticas
 
-```mermaid
-flowchart TD
-    subgraph DAG1["DAG 1 · ingest_xml_streaming · ⏱ a cada minuto"]
-        T1["xml_to_kafka"]
-        T2["validar_kafka"]
-        T3["acionar_medallion"]
-        T1 --> T2 --> T3
-    end
-
-    subgraph DAG2["DAG 2 · process_medallion · acionada pela DAG 1"]
-        T4["kafka_to_bronze"]
-        T5["bronze_to_silver"]
-        T6["validate_silver 🔒"]
-        T7["silver_to_gold"]
-        T4 --> T5 --> T6 --> T7
-    end
-
-    T3 -->|TriggerDagRunOperator| T4
-```
-
----
-
-## Consultas Analíticas — Camada Gold
-
-Todas as queries rodam no Hive Editor (Hue → http://localhost:8888) sobre as tabelas do Star Schema.
-
-**Faturamento por UF e Região** — *Quais estados geram mais receita?*
+**Vendas por UF** — *Quais estados geram mais faturamento?*
 ```sql
-SELECT l.uf, l.regiao,
-       COUNT(f.id_nfe)              AS quantidade_nfe,
+SELECT l.uf, l.regiao, COUNT(f.id_nfe) AS quantidade_nfe,
        ROUND(SUM(f.valor_total), 2) AS faturamento_total,
        ROUND(AVG(f.valor_total), 2) AS ticket_medio
 FROM gold.fato_vendas f
 JOIN gold.dim_localidade l ON f.id_localidade = l.id_localidade
-GROUP BY l.uf, l.regiao
-ORDER BY faturamento_total DESC;
+GROUP BY l.uf, l.regiao ORDER BY faturamento_total DESC;
 ```
 
-**Top 10 Emitentes com Participação no Total** — *Quem concentra mais faturamento?*
+**Top Emitentes** — *Quais são os 10 maiores emitentes?*
 ```sql
-SELECT e.cnpj, e.nome, l.uf,
-       ROUND(SUM(f.valor_total), 2)                                            AS faturamento_total,
-       ROUND(100.0 * SUM(f.valor_total) / SUM(SUM(f.valor_total)) OVER (), 2) AS participacao_pct
+SELECT e.cnpj, e.nome, l.uf, COUNT(f.id_nfe) AS quantidade_nfe,
+       ROUND(SUM(f.valor_total), 2) AS faturamento_total,
+       ROUND(AVG(f.valor_total), 2) AS ticket_medio
 FROM gold.fato_vendas f
 JOIN gold.dim_emitente   e ON f.id_emitente   = e.id_emitente
 JOIN gold.dim_localidade l ON f.id_localidade = l.id_localidade
-GROUP BY e.cnpj, e.nome, l.uf
-ORDER BY faturamento_total DESC
-LIMIT 10;
+GROUP BY e.cnpj, e.nome, l.uf ORDER BY faturamento_total DESC LIMIT 10;
 ```
 
-**Evolução Mensal com Crescimento MoM** — *Como o faturamento variou mês a mês?*
+**Evolução Mensal** — *Como o faturamento evoluiu mês a mês?*
 ```sql
-SELECT d.ano, d.mes,
-       COUNT(f.id_nfe)              AS quantidade_nfe,
+SELECT d.ano, d.mes, COUNT(f.id_nfe) AS quantidade_nfe,
        ROUND(SUM(f.valor_total), 2) AS faturamento_total,
-       ROUND(100.0 * (SUM(f.valor_total) - LAG(SUM(f.valor_total)) OVER (ORDER BY d.ano, d.mes))
-                   / LAG(SUM(f.valor_total)) OVER (ORDER BY d.ano, d.mes), 2) AS crescimento_pct
+       ROUND(AVG(f.valor_total), 2) AS ticket_medio
 FROM gold.fato_vendas f
 JOIN gold.dim_data d ON f.id_data = d.id_data
-GROUP BY d.ano, d.mes
-ORDER BY d.ano, d.mes;
+GROUP BY d.ano, d.mes ORDER BY d.ano, d.mes;
 ```
-
----
-
-## Quick Start
-
-```bash
-# 1. Subir toda a infraestrutura
-docker compose up -d
-
-# 2. Inicializar tabelas no Hive (apenas uma vez após o primeiro docker compose up)
-#    Acesse http://localhost:8888 (admin/admin) → Hive Editor → execute os DDLs da seção abaixo
-#
-#    Nota: o Spark grava os dados diretamente no HDFS — independente do Hive estar rodando.
-#    O Hive atua apenas como catálogo de metadados. As tabelas são EXTERNAL, ou seja,
-#    um DROP TABLE nunca apaga os dados do HDFS.
-
-# 3. Disparar o pipeline
-#    Acesse http://localhost:8081 (admin/admin) → DAG: ingest_xml_streaming → Trigger
-
-# 4. Rodar os testes
-docker exec pipeline_economia-airflow-1 bash -c \
-  "pip install pytest -q && python3 -m pytest /opt/airflow/tests/ -v"
-```
-
-### DDLs — Inicialização das Tabelas Hive
-
-Execute no **Hue → Hive Editor** uma única vez após o `docker compose up`:
-
-```sql
-CREATE DATABASE IF NOT EXISTS bronze;
-CREATE DATABASE IF NOT EXISTS silver;
-CREATE DATABASE IF NOT EXISTS gold;
-
--- Bronze: payload bruto do Kafka
-CREATE EXTERNAL TABLE IF NOT EXISTS bronze.nfe (payload STRING)
-STORED AS TEXTFILE
-LOCATION 'hdfs://namenode:8020/data/bronze/nfe';
-
--- Silver: campos tipados, deduplicados e validados
-CREATE EXTERNAL TABLE IF NOT EXISTS silver.nfe (
-  id_nfe STRING, numero_nfe STRING, serie STRING, data_emissao STRING,
-  natureza_operacao STRING, cnpj_emitente STRING, nome_emitente STRING,
-  uf_emitente STRING, municipio_emitente STRING, nome_destinatario STRING,
-  valor_produtos DOUBLE, valor_desconto DOUBLE, valor_total_nf DOUBLE,
-  arquivo_origem STRING
-) STORED AS PARQUET
-LOCATION 'hdfs://namenode:8020/data/silver/nfe';
-
--- Gold: Star Schema Kimball
-CREATE EXTERNAL TABLE IF NOT EXISTS gold.dim_emitente (
-  id_emitente BIGINT, cnpj STRING, nome STRING, uf STRING, municipio STRING
-) STORED AS PARQUET
-LOCATION 'hdfs://namenode:8020/data/gold/dim_emitente';
-
-CREATE EXTERNAL TABLE IF NOT EXISTS gold.dim_data (
-  id_data BIGINT, data STRING, dia INT, mes INT, ano INT, trimestre INT
-) STORED AS PARQUET
-LOCATION 'hdfs://namenode:8020/data/gold/dim_data';
-
-CREATE EXTERNAL TABLE IF NOT EXISTS gold.dim_localidade (
-  id_localidade BIGINT, uf STRING, regiao STRING, estado_completo STRING
-) STORED AS PARQUET
-LOCATION 'hdfs://namenode:8020/data/gold/dim_localidade';
-
-CREATE EXTERNAL TABLE IF NOT EXISTS gold.fato_vendas (
-  id_venda BIGINT, id_nfe STRING, id_emitente BIGINT, id_data BIGINT,
-  id_localidade BIGINT, valor_total DOUBLE, valor_produtos DOUBLE, valor_desconto DOUBLE
-) STORED AS PARQUET
-LOCATION 'hdfs://namenode:8020/data/gold/fato_vendas';
-```
-
----
-
-### Serviços
-
-| Serviço | URL | Credenciais |
-|---|---|---|
-| Airflow | http://localhost:8081 | admin / admin |
-| Spark Master | http://localhost:8080 | — |
-| Hue (HDFS + Hive) | http://localhost:8888 | admin / admin |
-| Kafdrop (Kafka UI) | http://localhost:9000 | — |
-| HDFS NameNode | http://localhost:50070 | — |
 
 ---
 
@@ -285,42 +252,153 @@ LOCATION 'hdfs://namenode:8020/data/gold/fato_vendas';
 ```
 pipeline_economia/
 ├── airflow/
-│   ├── dags/                                  # Apenas orquestração — sem regra de negócio
-│   │   ├── dag_ingest_xml.py                  # DAG 1 — XMLs → Kafka (schedule: * * * * *)
-│   │   └── dag_process_medallion.py           # DAG 2 — Kafka → Bronze → Silver → Gold
-│   └── scripts/                               # Regras de negócio e utilitários
-│       ├── observability.py                   # on_failure_callback · on_success_callback
-│       ├── ingest_xml_to_kafka.py             # Parser SEFAZ → publica no Kafka
-│       ├── kafka_to_bronze.py                 # Consome Kafka → salva JSON no HDFS
-│       ├── bronze_to_silver.py                # Aplica qualidade → salva Parquet
-│       ├── validate_silver.py                 # Quality Gate — 4 assertions
-│       └── silver_to_gold.py                  # Constrói Star Schema no HDFS
+│   ├── dags/
+│   │   ├── dag_ingest_xml.py          # DAG 1 — XMLs → Kafka
+│   │   └── dag_process_medallion.py   # DAG 2 — Kafka → Bronze → Silver → Gold
+│   └── scripts/
+│       ├── ingest_xml_to_kafka.py     # Lê XMLs, parseia e publica no Kafka
+│       ├── kafka_to_bronze.py         # Consome Kafka e salva JSON no HDFS
+│       ├── bronze_to_silver.py        # Aplica qualidade e salva Parquet
+│       ├── validate_silver.py         # 4 assertions de qualidade
+│       └── silver_to_gold.py          # Constrói Star Schema no HDFS
 ├── engines/
-│   ├── ingestion/
-│   │   ├── xml_reader.py                      # Parser XML SEFAZ 3.10 (XPath)
-│   │   └── kafka_producer.py                  # KafkaProducer — acks=all · retries=3
 │   └── processing/
-│       ├── bronze.py                          # Engine Bronze — cache + try/finally
-│       ├── silver.py                          # Engine Silver — qualidade + logging
-│       └── gold.py                            # Engine Gold — Star Schema Kimball
+│       ├── bronze.py                  # Lógica de ingestão Bronze
+│       ├── silver.py                  # Pipeline de qualidade Silver
+│       └── gold.py                    # Modelagem dimensional Gold
 ├── tests/
-│   ├── test_xml_reader.py                     # 8 testes — parser SEFAZ
-│   ├── test_kafka_producer.py                 # 9 testes — producer Kafka
-│   ├── test_bronze.py                         # 6 testes — camada Bronze
-│   ├── test_silver.py                         # 7 testes — qualidade Silver
-│   └── test_gold.py                           # 12 testes — Star Schema Gold
+│   ├── test_xml_reader.py             # 8 testes — parser de XML
+│   ├── test_kafka_producer.py         # Testes — producer Kafka
+│   ├── test_bronze.py                 # Testes — camada Bronze
+│   ├── test_silver.py                 # 7 testes — qualidade Silver
+│   └── test_gold.py                   # 12 testes — Star Schema Gold
 ├── config/
-│   ├── hadoop.env                             # Configurações Hadoop/Hive
-│   └── hue/hue.ini                            # Configuração Hue
-├── docs/evidencias/                           # Prints e logs de execução
-├── xmls/                                      # 100 NF-es fictícias SEFAZ
-└── docker-compose.yml                         # 14 serviços
+│   ├── hadoop.env                     # Configurações Hadoop/Hive
+│   └── hue/hue.ini                    # Configuração Hue
+├── docs/
+│   └── evidencias/                    # Prints e logs de execução
+├── xmls/                              # 100 NF-es fictícias SEFAZ
+└── docker-compose.yml                 # Infraestrutura completa
 ```
 
 ---
 
-<div align="center">
+## Como Executar
 
-Feito por **Luis Felipe Maio Toledo de Carvalho e Silva**
+### Pré-requisitos
 
-</div>
+- Docker e Docker Compose instalados
+- Mínimo 8GB de RAM disponível para os containers
+
+### 1. Subir a infraestrutura
+
+```bash
+docker compose up -d
+```
+
+Aguarde todos os serviços estarem saudáveis (~2 minutos). Serviços disponíveis:
+
+| Serviço | URL |
+|---|---|
+| Airflow | http://localhost:8081 |
+| Spark Master | http://localhost:8080 |
+| Hue | http://localhost:8888 |
+| Kafdrop (Kafka UI) | http://localhost:9000 |
+| HDFS NameNode | http://localhost:50070 |
+
+### 2. Inicializar tabelas no Hive
+
+Acesse o Hue (usuário: `admin`, senha: `admin`) e rode no Hive Editor:
+
+```sql
+CREATE DATABASE IF NOT EXISTS bronze;
+CREATE DATABASE IF NOT EXISTS silver;
+CREATE DATABASE IF NOT EXISTS gold;
+
+CREATE EXTERNAL TABLE bronze.nfe (payload STRING)
+STORED AS TEXTFILE
+LOCATION 'hdfs://namenode:8020/data/bronze/nfe';
+
+CREATE EXTERNAL TABLE silver.nfe (
+  id_nfe STRING, numero_nfe STRING, serie STRING, data_emissao STRING,
+  natureza_operacao STRING, cnpj_emitente STRING, nome_emitente STRING,
+  uf_emitente STRING, municipio_emitente STRING, nome_destinatario STRING,
+  valor_produtos DOUBLE, valor_desconto DOUBLE, valor_total_nf DOUBLE, arquivo_origem STRING
+) STORED AS PARQUET LOCATION 'hdfs://namenode:8020/data/silver/nfe';
+
+CREATE EXTERNAL TABLE gold.dim_emitente (
+  id_emitente INT, cnpj STRING, nome STRING, uf STRING, municipio STRING
+) STORED AS PARQUET LOCATION 'hdfs://namenode:8020/data/gold/dim_emitente';
+
+CREATE EXTERNAL TABLE gold.dim_data (
+  id_data INT, data STRING, dia INT, mes INT, ano INT, trimestre INT
+) STORED AS PARQUET LOCATION 'hdfs://namenode:8020/data/gold/dim_data';
+
+CREATE EXTERNAL TABLE gold.dim_localidade (
+  id_localidade INT, uf STRING, regiao STRING, estado_completo STRING
+) STORED AS PARQUET LOCATION 'hdfs://namenode:8020/data/gold/dim_localidade';
+
+CREATE EXTERNAL TABLE gold.fato_vendas (
+  id_venda BIGINT, id_nfe STRING, id_emitente INT, id_data INT,
+  id_localidade INT, valor_total DOUBLE, valor_produtos DOUBLE, valor_desconto DOUBLE
+) STORED AS PARQUET LOCATION 'hdfs://namenode:8020/data/gold/fato_vendas';
+```
+
+### 3. Executar o pipeline
+
+No Airflow (usuário: `admin`, senha: `admin`):
+
+1. Acesse a DAG `ingest_xml_streaming`
+2. Clique em **Trigger DAG**
+3. Aguarde a conclusão — ela aciona automaticamente a DAG `process_medallion`
+
+O fluxo completo executa em ~3 minutos:
+```
+xml_to_kafka → kafka_to_bronze → bronze_to_silver → validate_silver → silver_to_gold
+```
+
+### 4. Rodar os testes
+
+```bash
+docker exec pipeline_economia-airflow-1 bash -c \
+  "pip install pytest -q && python3 -m pytest /opt/airflow/tests/ -v"
+```
+
+Resultado esperado: **42 testes passando**.
+
+---
+
+## Testes
+
+| Módulo | Testes | O que cobre |
+|---|---|---|
+| `test_xml_reader.py` | 8 | Parser SEFAZ — campos, itens, erros |
+| `test_kafka_producer.py` | 5 | Producer — conexão, serialização |
+| `test_bronze.py` | 10 | Leitura Kafka, escrita HDFS |
+| `test_silver.py` | 7 | Validações de qualidade |
+| `test_gold.py` | 12 | Star Schema — dimensões, fato, mapeamentos |
+| **Total** | **42** | |
+
+Todos os testes usam **mocks** para rodar sem infraestrutura real (sem Spark, sem Kafka, sem HDFS).
+
+---
+
+## Tecnologias
+
+| Tecnologia | Versão | Papel |
+|---|---|---|
+| Apache Spark | 3.5.0 | Processamento distribuído |
+| Apache Kafka | 3.x | Streaming de mensagens |
+| Apache Airflow | 2.x | Orquestração |
+| Apache Hive | 2.3.2 | Catálogo e SQL analytics |
+| HDFS | 3.3 | Armazenamento distribuído |
+| Hue | 4.11 | Interface web HDFS + Hive |
+| PostgreSQL | 15 | Metastore Hive + Airflow |
+| Docker Compose | — | Infraestrutura local |
+| Python | 3.8 | Scripts PySpark e testes |
+
+---
+
+## Autor
+
+**Luis Felipe Maio Toledo de Carvalho e Silva**

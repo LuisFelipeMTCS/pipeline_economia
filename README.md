@@ -1,4 +1,4 @@
-# 🧾 NF-e Streaming Pipeline — Arquitetura Medalhão com Star Schema
+#  NF-e Streaming Pipeline — Arquitetura Medalhão com Star Schema
 
 <div align="center">
 
@@ -195,20 +195,6 @@ JOIN gold.dim_data d ON f.id_data = d.id_data
 GROUP BY d.ano, d.mes
 ORDER BY d.ano, d.mes;
 ```
-
----
-
-## Diferenciais Técnicos
-
-| # | Diferencial | Detalhe |
-|---|---|---|
-| 1 | **42 testes unitários** | 100% mocks — sem Spark, Kafka ou HDFS — roda em < 10s |
-| 2 | **Quality Gate** | 4 assertions bloqueiam a Gold se Silver estiver corrompida |
-| 3 | **Observabilidade** | `on_failure_callback` e `on_success_callback` em todas as tasks das 2 DAGs |
-| 4 | **Star Schema Kimball** | Queries analíticas com window functions (LAG, OVER, Pareto) |
-| 4 | **Idempotência** | Pipeline pode ser reexecutado N vezes com resultado idêntico |
-| 5 | **Cache estratégico** | `df.cache()` + `unpersist()` — evita rescans desnecessários de HDFS |
-| 6 | **Tabelas EXTERNAL** | `DROP TABLE` não apaga dados — Hive é catálogo, HDFS é storage |
 
 ---
 

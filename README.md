@@ -232,25 +232,36 @@ docker exec pipeline_economia-airflow-1 bash -c \
 ```
 pipeline_economia/
 ├── airflow/
-│   ├── dags/
-│   │   ├── dag_ingest_xml.py          # DAG 1 — XMLs → Kafka
-│   │   └── dag_process_medallion.py   # DAG 2 — Kafka → Bronze → Silver → Gold
-│   └── scripts/
-│       ├── observability.py           # Callbacks de falha/sucesso (compartilhado entre DAGs)
-│       ├── ingest_xml_to_kafka.py     # Parser SEFAZ → Kafka
-│       ├── kafka_to_bronze.py         # Kafka → HDFS JSON
-│       ├── bronze_to_silver.py        # Bronze → Parquet limpo
-│       ├── validate_silver.py         # Quality Gate (4 assertions)
-│       └── silver_to_gold.py          # Silver → Star Schema
+│   ├── dags/                                  # Apenas orquestração — sem regra de negócio
+│   │   ├── dag_ingest_xml.py                  # DAG 1 — XMLs → Kafka (schedule: * * * * *)
+│   │   └── dag_process_medallion.py           # DAG 2 — Kafka → Bronze → Silver → Gold
+│   └── scripts/                               # Regras de negócio e utilitários
+│       ├── observability.py                   # on_failure_callback · on_success_callback
+│       ├── ingest_xml_to_kafka.py             # Parser SEFAZ → publica no Kafka
+│       ├── kafka_to_bronze.py                 # Consome Kafka → salva JSON no HDFS
+│       ├── bronze_to_silver.py                # Aplica qualidade → salva Parquet
+│       ├── validate_silver.py                 # Quality Gate — 4 assertions
+│       └── silver_to_gold.py                  # Constrói Star Schema no HDFS
 ├── engines/
+│   ├── ingestion/
+│   │   ├── xml_reader.py                      # Parser XML SEFAZ 3.10 (XPath)
+│   │   └── kafka_producer.py                  # KafkaProducer — acks=all · retries=3
 │   └── processing/
-│       ├── bronze.py                  # Engine Bronze
-│       ├── silver.py                  # Engine Silver (qualidade)
-│       └── gold.py                    # Engine Gold (Kimball)
-├── tests/                             # 42 testes unitários
-├── config/                            # hadoop.env · hue.ini
-├── xmls/                              # 100 NF-es fictícias SEFAZ
-└── docker-compose.yml                 # 14 serviços
+│       ├── bronze.py                          # Engine Bronze — cache + try/finally
+│       ├── silver.py                          # Engine Silver — qualidade + logging
+│       └── gold.py                            # Engine Gold — Star Schema Kimball
+├── tests/
+│   ├── test_xml_reader.py                     # 8 testes — parser SEFAZ
+│   ├── test_kafka_producer.py                 # 9 testes — producer Kafka
+│   ├── test_bronze.py                         # 6 testes — camada Bronze
+│   ├── test_silver.py                         # 7 testes — qualidade Silver
+│   └── test_gold.py                           # 12 testes — Star Schema Gold
+├── config/
+│   ├── hadoop.env                             # Configurações Hadoop/Hive
+│   └── hue/hue.ini                            # Configuração Hue
+├── docs/evidencias/                           # Prints e logs de execução
+├── xmls/                                      # 100 NF-es fictícias SEFAZ
+└── docker-compose.yml                         # 14 serviços
 ```
 
 ---
